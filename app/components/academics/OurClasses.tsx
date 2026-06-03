@@ -42,7 +42,7 @@ export default function OurClasses() {
       <div className="relative mx-auto max-w-[1320px]">
         <PixelMotif className="absolute right-0 top-0 hidden sm:block" />
 
-        <h2 className="text-center text-[46px] font-medium leading-[1.1] text-[#274ac2]">
+        <h2 className="text-center text-[32px] font-medium leading-[1.1] text-[#274ac2] sm:text-[46px]">
           Our Classes
         </h2>
 

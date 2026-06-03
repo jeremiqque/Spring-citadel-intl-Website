@@ -94,7 +94,7 @@ export default function CoreValues() {
       <div className="mx-auto max-w-[1320px]">
         <div className="text-center">
           <Eyebrow>Our Core Values</Eyebrow>
-          <h2 className="mx-auto mt-4 max-w-[18ch] text-[46px] font-medium leading-[1.1]">
+          <h2 className="mx-auto mt-4 max-w-[18ch] text-[32px] font-medium leading-[1.1] sm:text-[46px]">
             The principles that guide us
           </h2>
         </div>

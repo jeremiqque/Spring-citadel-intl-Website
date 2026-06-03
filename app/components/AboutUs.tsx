@@ -13,7 +13,7 @@ export default function AboutUs() {
       <div className="mx-auto grid max-w-[1320px] items-center gap-12 lg:grid-cols-2 lg:gap-24">
         <div>
           <Eyebrow>About us</Eyebrow>
-          <h2 className="mt-4 max-w-[24ch] text-[38px] font-medium leading-[1.1]">
+          <h2 className="mt-4 max-w-[24ch] text-[28px] font-medium leading-[1.1] sm:text-[38px]">
             Raising Confident and Responsible Students
           </h2>
           <p className="mt-6 max-w-[55ch] text-[18px] leading-relaxed opacity-80">

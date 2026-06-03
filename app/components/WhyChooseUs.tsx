@@ -21,7 +21,7 @@ export default function WhyChooseUs() {
       <div className="mx-auto max-w-[1320px]">
         <div className="text-center">
           <Eyebrow>Why Choose Us</Eyebrow>
-          <h2 className="mx-auto mt-4 max-w-[18ch] text-[38px] font-medium leading-[1.1]">
+          <h2 className="mx-auto mt-4 max-w-[18ch] text-[28px] font-medium leading-[1.1] sm:text-[38px]">
             An Education Beyond the Classroom
           </h2>
         </div>

@@ -38,7 +38,7 @@ export default function MissionVision() {
         {/* Our Mission */}
         <div className="bg-[#274ac2] p-10 text-white sm:p-12">
           <CardIcon />
-          <h2 className="mt-8 text-[46px] font-medium leading-[1.1]">
+          <h2 className="mt-8 text-[32px] font-medium leading-[1.1] sm:text-[46px]">
             Our Mission
           </h2>
           <ol className="mt-8 space-y-6">
@@ -58,7 +58,7 @@ export default function MissionVision() {
         {/* Our Vision */}
         <div className="bg-[#14225c] p-10 text-white sm:p-12">
           <CardIcon />
-          <h2 className="mt-8 text-[46px] font-medium leading-[1.1]">
+          <h2 className="mt-8 text-[32px] font-medium leading-[1.1] sm:text-[46px]">
             Our Vision
           </h2>
           <p className="mt-8 text-[18px] leading-relaxed opacity-90">

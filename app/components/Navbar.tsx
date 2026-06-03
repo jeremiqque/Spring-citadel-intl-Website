@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
+import { FaBars, FaXmark } from "react-icons/fa6";
 import { useGSAP } from "@/lib/gsap";
 import { PillButton } from "./ui";
 
@@ -15,6 +16,7 @@ const LINKS: { label: string; href: string }[] = [
 
 export default function Navbar() {
   const root = useRef<HTMLElement>(null);
+  const [open, setOpen] = useState(false);
 
   // GSAP scaffolding only — scoped to this section, no animation yet.
   useGSAP(() => {}, { scope: root });
@@ -53,12 +55,48 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <PillButton tone="outline-blue" className="hidden sm:inline-flex">
+          <PillButton tone="outline-blue" className="hidden lg:inline-flex">
             School Portal
           </PillButton>
-          <PillButton tone="solid-blue">Enroll Now</PillButton>
+          <PillButton tone="solid-blue" className="hidden lg:inline-flex">
+            Enroll Now
+          </PillButton>
+
+          <button
+            type="button"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+            className="flex h-11 w-11 items-center justify-center border border-black/20 lg:hidden"
+          >
+            {open ? <FaXmark size={20} /> : <FaBars size={20} />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile dropdown */}
+      {open && (
+        <nav className="border-t border-black/10 pb-6 lg:hidden">
+          <div className="mx-auto flex max-w-[1320px] flex-col gap-1 pt-2">
+            {LINKS.map((l) => (
+              <Link
+                key={l.label}
+                href={l.href}
+                onClick={() => setOpen(false)}
+                className="py-3 text-[18px] opacity-80 transition-opacity hover:opacity-100"
+              >
+                {l.label}
+              </Link>
+            ))}
+            <PillButton tone="outline-blue" className="mt-3 inline-flex w-full">
+              School Portal
+            </PillButton>
+            <PillButton tone="solid-blue" className="mt-2 inline-flex w-full">
+              Enroll Now
+            </PillButton>
+          </div>
+        </nav>
+      )}
     </header>
   );
 }

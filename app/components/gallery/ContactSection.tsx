@@ -44,7 +44,7 @@ export default function ContactSection({
 
         {/* Left: heading + contact details */}
         <div>
-          <h2 className="max-w-[24ch] text-[46px] font-medium leading-[1.1]">
+          <h2 className="max-w-[24ch] text-[32px] font-medium leading-[1.1] sm:text-[46px]">
             Have questions about us? Let&apos;s talk today!
           </h2>
           {subtitle && (

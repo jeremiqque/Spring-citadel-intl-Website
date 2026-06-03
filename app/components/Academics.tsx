@@ -22,7 +22,7 @@ export default function Academics() {
 
         <div className="order-1 lg:order-2">
           <Eyebrow className="opacity-80">Our Academics</Eyebrow>
-          <h2 className="mt-4 max-w-[16ch] text-[38px] font-medium leading-[1.1]">
+          <h2 className="mt-4 max-w-[16ch] text-[28px] font-medium leading-[1.1] sm:text-[38px]">
             Quality Education for Every Stage
           </h2>
           <p className="mt-6 max-w-[55ch] text-[18px] leading-relaxed opacity-90">

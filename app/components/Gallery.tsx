@@ -31,7 +31,7 @@ export default function Gallery() {
         <div className="flex flex-col items-start justify-between gap-8 lg:flex-row lg:items-end">
           <div>
             <Eyebrow>Gallery</Eyebrow>
-            <h2 className="mt-4 max-w-[16ch] text-[38px] font-medium leading-[1.1]">
+            <h2 className="mt-4 max-w-[16ch] text-[28px] font-medium leading-[1.1] sm:text-[38px]">
               Life at Spring Citadel
             </h2>
             <p className="mt-5 max-w-[50ch] text-[18px] leading-relaxed opacity-80">
@@ -52,11 +52,11 @@ export default function Gallery() {
         </div>
 
         {/* Tilted / scattered row */}
-        <div className="mt-[200px] flex items-center justify-center gap-3">
+        <div className="mt-24 flex flex-wrap items-center justify-center gap-3 sm:mt-[200px]">
           {[-8, 7, -8, 7, -8, 7].map((rot, i) => (
             <GalleryTile
               key={i}
-              className="h-[220px] w-[170px] shrink-0"
+              className="h-[180px] w-[130px] shrink-0 sm:h-[220px] sm:w-[170px]"
               style={{ transform: `rotate(${rot}deg)` }}
             />
           ))}

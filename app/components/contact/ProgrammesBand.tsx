@@ -26,7 +26,7 @@ export default function ProgrammesBand() {
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
           {/* Left: heading + paragraph + button */}
           <div>
-            <h2 className="max-w-[14ch] text-[46px] font-medium leading-[1.1]">
+            <h2 className="max-w-[14ch] text-[32px] font-medium leading-[1.1] sm:text-[46px]">
               Step by step, we guide your child to excellence
             </h2>
             <p className="mt-6 max-w-[40ch] text-[18px] leading-relaxed opacity-90">

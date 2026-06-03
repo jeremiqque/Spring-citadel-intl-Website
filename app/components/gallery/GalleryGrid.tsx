@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useGSAP } from "@/lib/gsap";
 import { PixelMotif } from "../ui";
+import Reveal from "../Reveal";
 
 // Masonry-style spans (col / row) to vary block sizes.
 const BLOCKS = [
@@ -28,12 +29,13 @@ export default function GalleryGrid() {
 
         <div className="grid auto-rows-[180px] grid-cols-2 gap-5 md:grid-cols-4">
           {BLOCKS.map((span, i) => (
-            <div
-              key={i}
-              role="img"
-              aria-label="Gallery photo"
-              className={`img-luminosity bg-[#274ac2] ${span}`}
-            />
+            <Reveal key={i} className={`overflow-hidden ${span}`}>
+              <div
+                role="img"
+                aria-label="Gallery photo"
+                className="img-luminosity h-full w-full bg-[#274ac2]"
+              />
+            </Reveal>
           ))}
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useGSAP } from "@/lib/gsap";
 import { Eyebrow, PillButton, Placeholder } from "./ui";
+import Reveal from "./Reveal";
 
 export default function AboutUs() {
   const root = useRef<HTMLElement>(null);
@@ -32,10 +33,16 @@ export default function AboutUs() {
           </div>
         </div>
 
-        <Placeholder
-          label="About Image"
-          className="h-[420px] w-full rounded-[28px] lg:h-[520px]"
-        />
+        <Reveal
+          feature
+          className="h-[420px] w-full overflow-hidden rounded-[28px] lg:h-[520px]"
+        >
+          <Placeholder
+            label="About Image"
+            blend={false}
+            className="h-full w-full"
+          />
+        </Reveal>
       </div>
     </section>
   );

@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useGSAP } from "@/lib/gsap";
 import { Eyebrow, Placeholder } from "./ui";
+import Reveal from "./Reveal";
 
 const CARDS = [
   "Qualified & Caring Teachers",
@@ -32,7 +33,9 @@ export default function WhyChooseUs() {
               key={c}
               className="relative h-[340px] overflow-hidden"
             >
-              <Placeholder label="" className="absolute inset-0 h-full w-full" />
+              <Reveal feature className="absolute inset-0">
+                <Placeholder label="" blend={false} className="h-full w-full" />
+              </Reveal>
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <span className="absolute bottom-5 left-5 right-5 text-[18px] font-medium leading-tight text-white">
                 {c}

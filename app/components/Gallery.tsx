@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useGSAP } from "@/lib/gsap";
 import { Eyebrow, PillButton } from "./ui";
+import Reveal from "./Reveal";
 
 function GalleryTile({
   className = "",
@@ -44,10 +45,20 @@ export default function Gallery() {
           </PillButton>
         </div>
 
-        {/* Row of equal tiles */}
+        {/* Row of equal tiles — feature photos warm to colour on reveal */}
         <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-3">
           {[0, 1, 2].map((i) => (
-            <GalleryTile key={i} className="aspect-[351/324] w-full" />
+            <Reveal
+              key={i}
+              feature
+              className="aspect-[351/324] w-full overflow-hidden"
+            >
+              <div
+                role="img"
+                aria-label="Gallery photo"
+                className="h-full w-full bg-[#d9d9d9]"
+              />
+            </Reveal>
           ))}
         </div>
 

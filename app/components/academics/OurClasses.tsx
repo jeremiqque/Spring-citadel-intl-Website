@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useGSAP } from "@/lib/gsap";
 import { PillButton, PixelMotif } from "../ui";
+import Reveal from "../Reveal";
 
 const CLASSES = [
   { title: "Early Years", sub: "(Pre-Nursery & Nursery 1–3)" },
@@ -14,11 +15,13 @@ const CLASSES = [
 function ClassCard({ title, sub }: { title: string; sub: string }) {
   return (
     <div>
-      <div
-        role="img"
-        aria-label={`${title} ${sub}`}
-        className="img-luminosity aspect-[4/5] w-full bg-[#274ac2]"
-      />
+      <Reveal feature className="aspect-[4/5] w-full overflow-hidden">
+        <div
+          role="img"
+          aria-label={`${title} ${sub}`}
+          className="h-full w-full bg-[#274ac2]"
+        />
+      </Reveal>
       <h3 className="mt-5 text-[20px] font-medium leading-snug text-[#274ac2]">
         {title}
         <br />

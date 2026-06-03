@@ -22,7 +22,7 @@ export default function GalleryGrid() {
   useGSAP(() => {}, { scope: root });
 
   return (
-    <section ref={root} className="side-pad mt-[100px]">
+    <section ref={root} className="side-pad mt-[100px] mb-[120px]">
       <div className="relative mx-auto max-w-[1320px]">
         <PixelMotif className="absolute -top-10 right-0 hidden sm:block" />
 

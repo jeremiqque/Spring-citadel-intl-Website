@@ -58,7 +58,7 @@ export default function Navbar() {
           <PillButton tone="outline-blue" className="hidden lg:inline-flex">
             School Portal
           </PillButton>
-          <PillButton tone="solid-blue" className="hidden lg:inline-flex">
+          <PillButton tone="solid-blue" href="/contact" className="hidden lg:inline-flex">
             Enroll Now
           </PillButton>
 
@@ -91,7 +91,7 @@ export default function Navbar() {
             <PillButton tone="outline-blue" className="mt-3 inline-flex w-full">
               School Portal
             </PillButton>
-            <PillButton tone="solid-blue" className="mt-2 inline-flex w-full">
+            <PillButton tone="solid-blue" href="/contact" className="mt-2 inline-flex w-full">
               Enroll Now
             </PillButton>
           </div>

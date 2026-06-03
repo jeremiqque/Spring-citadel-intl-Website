@@ -19,7 +19,7 @@ export default function ClosingCTA() {
           and strong character. We&apos;d love to welcome your family.
         </p>
         <div className="mt-10">
-          <PillButton tone="solid-blue" arrow className="!px-7 !py-4">
+          <PillButton tone="solid-blue" arrow href="/contact" className="!px-7 !py-4">
             Apply for Admission
           </PillButton>
         </div>

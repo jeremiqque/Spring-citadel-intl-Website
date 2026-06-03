@@ -32,7 +32,7 @@ export default function Footer() {
           <div className="max-w-[260px] text-[20px] font-medium leading-tight">
             Spring Citadel International School
           </div>
-          <p className="mt-4 max-w-[34ch] text-[16px] opacity-80">
+          <p className="mt-4 max-w-[30ch] text-[16px] opacity-80">
             Excellence & Morals. 
             Est. 2008, Niger, Nigeria.
           </p>

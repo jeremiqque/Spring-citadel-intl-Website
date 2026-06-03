@@ -34,7 +34,7 @@ export default function ProgrammesBand() {
               to nurture every stage of your child&apos;s growth.
             </p>
             <div className="mt-8">
-              <PillButton tone="white" arrow>
+              <PillButton tone="white" arrow href="/academics">
                 Explore our Programmes
               </PillButton>
             </div>

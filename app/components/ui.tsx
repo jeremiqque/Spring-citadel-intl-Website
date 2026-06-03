@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { FaArrowRightLong } from "react-icons/fa6";
 
 type Tone = "ink" | "white" | "solid-blue" | "outline-blue";
@@ -30,14 +31,22 @@ export function PillButton({
       background: "#fff",
     },
   };
-  return (
-    <a
-      href={href}
-      className={`btn-pill gap-2 font-[var(--font-aeonik)] ${className}`}
-      style={tones[tone]}
-    >
+  const cls = `btn-pill gap-2 font-[var(--font-aeonik)] ${className}`;
+  const inner = (
+    <>
       {children}
       {arrow && <FaArrowRightLong size={18} aria-hidden="true" />}
+    </>
+  );
+  // Use client-side routing for internal routes; <a> for hashes / external.
+  const isInternal = href.startsWith("/");
+  return isInternal ? (
+    <Link href={href} className={cls} style={tones[tone]}>
+      {inner}
+    </Link>
+  ) : (
+    <a href={href} className={cls} style={tones[tone]}>
+      {inner}
     </a>
   );
 }

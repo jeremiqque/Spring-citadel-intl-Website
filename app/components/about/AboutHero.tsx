@@ -1,12 +1,12 @@
 "use client";
 
 import { useRef } from "react";
-import { useGSAP } from "@/lib/gsap";
 import { Placeholder, Stat, SCHOOL_STATS } from "../ui";
+import { useCountUp } from "../scroll-hooks";
 
 export default function AboutHero() {
   const root = useRef<HTMLElement>(null);
-  useGSAP(() => {}, { scope: root });
+  useCountUp(root);
 
   return (
     <section ref={root} className="side-pad mt-[80px]">

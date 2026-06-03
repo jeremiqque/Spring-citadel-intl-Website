@@ -126,9 +126,19 @@ export function Stat({
   label: string;
   className?: string;
 }) {
+  // Split "98%" / "120+" into prefix, number and suffix for count-up.
+  const m = value.match(/^(\D*)([\d.]+)(.*)$/);
+  const prefix = m?.[1] ?? "";
+  const num = m?.[2] ?? "";
+  const suffix = m?.[3] ?? "";
   return (
     <div className={className}>
-      <div className="text-[48px] font-medium leading-none sm:text-[60px]">
+      <div
+        data-count={num}
+        data-prefix={prefix || undefined}
+        data-suffix={suffix || undefined}
+        className="text-[48px] font-medium leading-none sm:text-[60px]"
+      >
         {value}
       </div>
       <div className="mt-3 text-[18px] opacity-80">{label}</div>

@@ -47,7 +47,7 @@ export default function Navbar() {
             <Link
               key={l.label}
               href={l.href}
-              className="text-[18px] opacity-80 transition-opacity hover:opacity-100"
+              className="text-[18px] opacity-80 transition-colors hover:text-[#274ac2] hover:opacity-100"
             >
               {l.label}
             </Link>
@@ -83,7 +83,7 @@ export default function Navbar() {
                 key={l.label}
                 href={l.href}
                 onClick={() => setOpen(false)}
-                className="py-3 text-[18px] opacity-80 transition-opacity hover:opacity-100"
+                className="py-3 text-[18px] opacity-80 transition-colors hover:text-[#274ac2] hover:opacity-100"
               >
                 {l.label}
               </Link>

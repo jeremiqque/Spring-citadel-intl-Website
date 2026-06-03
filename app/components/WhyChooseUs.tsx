@@ -1,9 +1,9 @@
 "use client";
 
 import { useRef } from "react";
-import { useGSAP } from "@/lib/gsap";
 import { Eyebrow, Placeholder } from "./ui";
 import Reveal from "./Reveal";
+import { useBatchReveal } from "./scroll-hooks";
 
 const CARDS = [
   "Qualified & Caring Teachers",
@@ -15,7 +15,7 @@ const CARDS = [
 
 export default function WhyChooseUs() {
   const root = useRef<HTMLElement>(null);
-  useGSAP(() => {}, { scope: root });
+  useBatchReveal(root, "[data-card]");
 
   return (
     <section ref={root} className="side-pad mt-[120px]">
@@ -31,6 +31,7 @@ export default function WhyChooseUs() {
           {CARDS.map((c) => (
             <div
               key={c}
+              data-card
               className="relative h-[340px] overflow-hidden"
             >
               <Reveal feature className="absolute inset-0">

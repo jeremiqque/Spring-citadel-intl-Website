@@ -4,23 +4,7 @@ import { useRef } from "react";
 import { useGSAP } from "@/lib/gsap";
 import { Eyebrow, PillButton } from "./ui";
 import Reveal from "./Reveal";
-
-function GalleryTile({
-  className = "",
-  style,
-}: {
-  className?: string;
-  style?: React.CSSProperties;
-}) {
-  return (
-    <div
-      role="img"
-      aria-label="Gallery photo"
-      className={`img-luminosity bg-[#d9d9d9] ${className}`}
-      style={style}
-    />
-  );
-}
+import FlipCard from "./FlipCard";
 
 export default function Gallery() {
   const root = useRef<HTMLElement>(null);
@@ -62,10 +46,10 @@ export default function Gallery() {
           ))}
         </div>
 
-        {/* Tilted / scattered row */}
+        {/* Tilted / scattered row — flip on hover or tap */}
         <div className="mt-24 flex flex-wrap items-center justify-center gap-3 sm:mt-[200px]">
           {[-8, 7, -8, 7, -8, 7].map((rot, i) => (
-            <GalleryTile
+            <FlipCard
               key={i}
               className="h-[180px] w-[130px] shrink-0 sm:h-[220px] sm:w-[170px]"
               style={{ transform: `rotate(${rot}deg)` }}

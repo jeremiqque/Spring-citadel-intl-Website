@@ -1,9 +1,9 @@
 "use client";
 
 import { useRef } from "react";
-import { useGSAP } from "@/lib/gsap";
 import { PillButton, PixelMotif } from "../ui";
 import Reveal from "../Reveal";
+import { useBatchReveal } from "../scroll-hooks";
 
 const CLASSES = [
   { title: "Early Years", sub: "(Pre-Nursery & Nursery 1–3)" },
@@ -14,7 +14,10 @@ const CLASSES = [
 
 function ClassCard({ title, sub }: { title: string; sub: string }) {
   return (
-    <div>
+    <div
+      data-card
+      className="transition-transform duration-300 ease-out hover:-translate-y-1.5"
+    >
       <Reveal feature className="aspect-[4/5] w-full overflow-hidden">
         <div
           role="img"
@@ -38,7 +41,7 @@ function ClassCard({ title, sub }: { title: string; sub: string }) {
 
 export default function OurClasses() {
   const root = useRef<HTMLElement>(null);
-  useGSAP(() => {}, { scope: root });
+  useBatchReveal(root, "[data-card]");
 
   return (
     <section ref={root} className="side-pad mt-[120px]">

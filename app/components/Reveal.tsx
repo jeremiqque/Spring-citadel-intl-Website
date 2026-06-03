@@ -22,12 +22,13 @@ export default function Reveal({
   feature = false,
   className = "",
   start = "top 85%",
+  ...rest
 }: {
   children: React.ReactNode;
   feature?: boolean;
   className?: string;
   start?: string;
-}) {
+} & React.HTMLAttributes<HTMLDivElement>) {
   const clip = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
 
@@ -84,7 +85,7 @@ export default function Reveal({
   );
 
   return (
-    <div ref={clip} className={className}>
+    <div ref={clip} className={className} {...rest}>
       <div ref={inner} className="h-full w-full">
         {children}
       </div>

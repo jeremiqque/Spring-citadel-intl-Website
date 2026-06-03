@@ -1,18 +1,18 @@
 "use client";
 
 import { useRef } from "react";
-import { useGSAP } from "@/lib/gsap";
 import { PillButton } from "./ui";
+import { useCountUp } from "./scroll-hooks";
 
 const STATS = [
-  { value: "98%", label: "WAEC Pass Rate" },
-  { value: "120+", label: "Teaching Staff" },
-  { value: "25+", label: "Years of Excellence" },
+  { num: 98, suffix: "%", value: "98%", label: "WAEC Pass Rate" },
+  { num: 120, suffix: "+", value: "120+", label: "Teaching Staff" },
+  { num: 25, suffix: "+", value: "25+", label: "Years of Excellence" },
 ];
 
 export default function MissionBand() {
   const root = useRef<HTMLElement>(null);
-  useGSAP(() => {}, { scope: root });
+  useCountUp(root);
 
   return (
     <section
@@ -46,7 +46,11 @@ export default function MissionBand() {
         <div className="mt-16 grid grid-cols-1 gap-10 border-t border-white/20 pt-12 sm:grid-cols-3">
           {STATS.map((s) => (
             <div key={s.label} className="text-center">
-              <div className="text-[48px] font-medium leading-none sm:text-[60px]">
+              <div
+                data-count={s.num}
+                data-suffix={s.suffix}
+                className="text-[48px] font-medium leading-none sm:text-[60px]"
+              >
                 {s.value}
               </div>
               <div className="mt-3 text-[18px] opacity-80">{s.label}</div>

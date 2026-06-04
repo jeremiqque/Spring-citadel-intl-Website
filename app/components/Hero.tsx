@@ -69,7 +69,7 @@ export default function Hero() {
 
         <h1
           ref={heading}
-          className="max-w-[14ch] text-[clamp(34px,11vw,44px)] font-medium leading-[1.05] sm:text-[60px]"
+          className="max-w-[14ch] text-[clamp(34px,11vw,44px)] font-medium leading-[1.18] sm:text-[60px]"
         >
           Welcome to Spring Citadel Int&apos;l School
         </h1>

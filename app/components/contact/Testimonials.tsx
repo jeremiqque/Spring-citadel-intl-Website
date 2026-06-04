@@ -1,9 +1,9 @@
 "use client";
 
 import { useRef } from "react";
-import { FaStar, FaChevronLeft, FaChevronRight } from "react-icons/fa6";
-import { useGSAP } from "@/lib/gsap";
-import { Eyebrow } from "../ui";
+import { FaStar } from "react-icons/fa6";
+import { LuArrowRightToLine } from "react-icons/lu";
+import { gsap, useGSAP } from "@/lib/gsap";
 
 const REVIEWS = [
   {
@@ -33,56 +33,84 @@ function Stars() {
   );
 }
 
-function ArrowBtn({ dir }: { dir: "prev" | "next" }) {
+function Card({ quote, name }: { quote: string; name: string }) {
   return (
-    <button
-      type="button"
-      aria-label={dir === "prev" ? "Previous" : "Next"}
-      className="flex h-11 w-11 items-center justify-center border border-black/20 transition-colors hover:bg-black/5"
-    >
-      {dir === "prev" ? (
-        <FaChevronLeft size={16} aria-hidden="true" />
-      ) : (
-        <FaChevronRight size={16} aria-hidden="true" />
-      )}
-    </button>
+    <article className="mr-6 flex w-[85vw] max-w-[520px] shrink-0 flex-col justify-between border border-black/15 p-8 sm:w-[520px] sm:p-10">
+      <div>
+        <Stars />
+        <p className="mt-6 text-[17px] leading-relaxed opacity-80 sm:text-[18px]">
+          {quote}
+        </p>
+      </div>
+      <div className="mt-8 flex items-center gap-3">
+        <span aria-hidden="true" className="h-12 w-12 rounded-full bg-[#d9d9d9]" />
+        <span className="text-[16px] font-medium">{name}</span>
+      </div>
+    </article>
+  );
+}
+
+// One half of the marquee track; the track holds two identical halves so
+// animating to -50% loops seamlessly (same trick as the enrol marquee).
+function Half({ hidden = false }: { hidden?: boolean }) {
+  return (
+    <div className="flex" aria-hidden={hidden || undefined}>
+      {REVIEWS.map((r) => (
+        <Card key={r.name} quote={r.quote} name={r.name} />
+      ))}
+    </div>
   );
 }
 
 export default function Testimonials() {
   const root = useRef<HTMLElement>(null);
-  useGSAP(() => {}, { scope: root });
+  const track = useRef<HTMLDivElement>(null);
+
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        const tween = gsap.to(track.current, {
+          xPercent: -50,
+          duration: 70,
+          ease: "none",
+          repeat: -1,
+        });
+
+        // Pause while reading (hover / touch), resume on leave.
+        const el = track.current!;
+        const pause = () => tween.pause();
+        const play = () => tween.play();
+        el.addEventListener("pointerenter", pause);
+        el.addEventListener("pointerleave", play);
+        return () => {
+          el.removeEventListener("pointerenter", pause);
+          el.removeEventListener("pointerleave", play);
+        };
+      });
+      // Reduced motion: no auto-scroll; the strip stays manually scrollable
+      // via the motion-reduce class on the container below.
+    },
+    { scope: root }
+  );
 
   return (
-    <section ref={root} className="side-pad mt-[120px]">
-      <div className="mx-auto max-w-[1320px]">
-        <div className="flex items-center justify-between gap-6">
-          <Eyebrow>Testimonials</Eyebrow>
-          <div className="flex gap-3">
-            <ArrowBtn dir="prev" />
-            <ArrowBtn dir="next" />
-          </div>
+    <section ref={root} className="mt-20 sm:mt-[120px]">
+      <div className="side-pad">
+        <div className="mx-auto max-w-[1320px]">
+          <span className="inline-flex items-center gap-2 text-[16px]">
+            Testimonials
+            <LuArrowRightToLine size={18} color="#274ac2" aria-hidden="true" />
+          </span>
         </div>
+      </div>
 
-        <div className="mt-10 flex gap-6 overflow-x-auto pb-4">
-          {REVIEWS.map((r) => (
-            <article
-              key={r.name}
-              className="w-[380px] shrink-0 border border-black/15 p-8"
-            >
-              <Stars />
-              <p className="mt-5 text-[17px] leading-relaxed opacity-80">
-                {r.quote}
-              </p>
-              <div className="mt-6 flex items-center gap-3">
-                <span
-                  aria-hidden="true"
-                  className="h-11 w-11 rounded-full bg-[#d9d9d9]"
-                />
-                <span className="text-[16px] font-medium">{r.name}</span>
-              </div>
-            </article>
-          ))}
+      {/* Full-bleed marquee strip */}
+      <div className="mt-10 overflow-hidden motion-reduce:overflow-x-auto">
+        <div ref={track} className="flex w-max">
+          <Half />
+          <Half hidden />
         </div>
       </div>
     </section>

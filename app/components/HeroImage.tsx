@@ -44,7 +44,7 @@ export default function HeroImage() {
   );
 
   return (
-    <section ref={root} className="side-pad mt-[80px]">
+    <section ref={root} className="side-pad mt-12 sm:mt-[80px]">
       <div ref={art}>
         <Placeholder
           label="School Building Illustration"

@@ -49,7 +49,7 @@ export default function AboutUs() {
   );
 
   return (
-    <section ref={root} id="about-us" className="side-pad mt-[120px]">
+    <section ref={root} id="about-us" className="side-pad mt-20 sm:mt-[120px]">
       <div className="mx-auto grid max-w-[1320px] items-center gap-12 lg:grid-cols-2 lg:gap-24">
         <div data-col-text>
           <Eyebrow>About us</Eyebrow>

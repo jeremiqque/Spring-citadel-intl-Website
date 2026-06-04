@@ -44,7 +44,7 @@ export default function OurClasses() {
   useBatchReveal(root, "[data-card]");
 
   return (
-    <section ref={root} className="side-pad mt-[120px]">
+    <section ref={root} className="side-pad mt-20 sm:mt-[120px]">
       <div className="relative mx-auto max-w-[1320px]">
         <PixelMotif className="absolute right-0 top-0 hidden sm:block" />
 

@@ -33,7 +33,7 @@ export default function MissionVision() {
   useGSAP(() => {}, { scope: root });
 
   return (
-    <section ref={root} className="side-pad mt-[120px]">
+    <section ref={root} className="side-pad mt-20 sm:mt-[120px]">
       <div className="mx-auto grid max-w-[1320px] gap-8 lg:grid-cols-2">
         {/* Our Mission */}
         <div className="bg-[#274ac2] p-10 text-white sm:p-12">

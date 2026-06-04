@@ -9,10 +9,10 @@ export default function AcademicsHeader() {
   useGSAP(() => {}, { scope: root });
 
   return (
-    <section ref={root} className="side-pad pt-[80px]">
+    <section ref={root} className="side-pad pt-12 sm:pt-[80px]">
       <div className="mx-auto max-w-[1320px]">
-        <span className="inline-flex items-center gap-2 text-[14px] uppercase tracking-[0.18em] opacity-70">
-          Our Academics
+        <span className="inline-flex items-center gap-2 text-[16px]">
+          Our academics
           <LuArrowRightToLine size={18} color="#274ac2" aria-hidden="true" />
         </span>
 

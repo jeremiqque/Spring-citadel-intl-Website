@@ -29,10 +29,10 @@ export default function ComingSoon() {
   useGSAP(() => {}, { scope: root });
 
   return (
-    <section ref={root} className="side-pad mt-[80px]">
-      <div className="mx-auto flex max-w-[1320px] items-center justify-center gap-4">
+    <section ref={root} className="side-pad mt-12 sm:mt-[80px]">
+      <div className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-center gap-4 text-center">
         <Flower />
-        <p className="text-[24px] font-medium text-[#274ac2] sm:text-[28px]">
+        <p className="text-[20px] font-medium text-[#274ac2] sm:text-[28px]">
           Higher institution coming soon……
         </p>
       </div>

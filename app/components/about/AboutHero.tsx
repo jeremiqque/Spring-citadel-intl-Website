@@ -9,16 +9,16 @@ export default function AboutHero() {
   useCountUp(root);
 
   return (
-    <section ref={root} className="side-pad mt-[80px]">
+    <section ref={root} className="side-pad mt-12 sm:mt-[80px]">
       <div className="relative overflow-hidden">
         <Placeholder
           label="School Building Illustration"
           className="h-[420px] w-full sm:h-[560px]"
         />
 
-        {/* Stats overlaid on the illustration */}
-        <div className="absolute inset-x-0 bottom-0">
-          <div className="bg-gradient-to-t from-black/55 to-transparent px-6 pb-10 pt-24 sm:px-12">
+        {/* Stats: solid band below the image on mobile, overlaid at sm+ */}
+        <div className="sm:absolute sm:inset-x-0 sm:bottom-0">
+          <div className="bg-[#14225c] px-6 py-10 sm:bg-transparent sm:bg-gradient-to-t sm:from-black/55 sm:to-transparent sm:px-12 sm:pb-10 sm:pt-24">
             <div className="mx-auto grid max-w-[1320px] grid-cols-1 gap-8 text-white sm:grid-cols-3">
               {SCHOOL_STATS.map((s) => (
                 <Stat

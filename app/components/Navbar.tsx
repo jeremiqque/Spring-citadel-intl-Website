@@ -42,7 +42,7 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-8 lg:flex">
+        <nav className="hidden items-center gap-8 xl:flex">
           {LINKS.map((l) => (
             <Link
               key={l.label}
@@ -66,19 +66,21 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <PillButton tone="outline-blue" swap className="hidden lg:inline-flex">
-            School Portal
-          </PillButton>
-          <PillButton tone="solid-blue" swap href="/contact" className="hidden lg:inline-flex">
-            Enroll Now
-          </PillButton>
+          <div className="hidden items-center gap-3 xl:flex">
+            <PillButton tone="outline-blue" swap>
+              School Portal
+            </PillButton>
+            <PillButton tone="solid-blue" swap href="/contact">
+              Enroll Now
+            </PillButton>
+          </div>
 
           <button
             type="button"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className="flex h-11 w-11 items-center justify-center border border-black/20 lg:hidden"
+            className="flex h-11 w-11 items-center justify-center border border-black/20 xl:hidden"
           >
             {open ? <FaXmark size={20} /> : <FaBars size={20} />}
           </button>
@@ -87,7 +89,7 @@ export default function Navbar() {
 
       {/* Mobile dropdown */}
       {open && (
-        <nav className="border-t border-black/10 pb-6 lg:hidden">
+        <nav className="border-t border-black/10 pb-6 xl:hidden">
           <div className="mx-auto flex max-w-[1320px] flex-col gap-1 pt-2">
             {LINKS.map((l) => (
               <Link

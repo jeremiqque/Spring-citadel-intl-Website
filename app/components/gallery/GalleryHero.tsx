@@ -11,20 +11,20 @@ export default function GalleryHero() {
   return (
     <section ref={root} className="side-pad mt-6">
       <div className="relative overflow-hidden">
-        {/* Darkened school illustration background */}
+        {/* Darkened school illustration background (fills whatever height the content needs) */}
         <div
           role="img"
           aria-label="School illustration"
-          className="img-luminosity h-[420px] w-full bg-[#d9d9d9] sm:h-[480px]"
+          className="img-luminosity absolute inset-0 bg-[#d9d9d9]"
         />
         <div className="absolute inset-0 bg-black/55" />
 
-        {/* Content top-left */}
-        <div className="absolute inset-0 flex items-start">
-          <div className="side-pad w-full pt-12 sm:pt-16">
+        {/* Content top-left — in normal flow so the hero grows with it */}
+        <div className="relative min-h-[420px] sm:min-h-[480px]">
+          <div className="side-pad w-full py-12 sm:pt-16">
             <div className="mx-auto max-w-[1320px] text-white">
               <span className="inline-flex items-center gap-2 bg-white px-5 py-3 text-[16px] text-black">
-                Our Gallery
+                Our gallery
                 <LuArrowRightToLine size={18} color="#274ac2" aria-hidden="true" />
               </span>
 

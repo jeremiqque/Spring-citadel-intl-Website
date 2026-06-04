@@ -8,7 +8,7 @@ export default function Stakeholders() {
   useGSAP(() => {}, { scope: root });
 
   return (
-    <section ref={root} className="side-pad mt-[120px]">
+    <section ref={root} className="side-pad mt-20 sm:mt-[120px]">
       <div className="mx-auto max-w-[1320px]">
         <h2 className="text-center text-[24px] font-medium">
           Meet Our Stakeholders

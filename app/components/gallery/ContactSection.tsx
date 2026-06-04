@@ -38,7 +38,7 @@ export default function ContactSection({
   useGSAP(() => {}, { scope: root });
 
   return (
-    <section ref={root} className="side-pad mt-[120px]">
+    <section ref={root} className="side-pad mt-20 sm:mt-[120px]">
       <div className="relative mx-auto grid max-w-[1320px] gap-12 lg:grid-cols-2 lg:gap-20">
         <PixelMotif className="absolute -top-12 right-0 hidden lg:block" />
 

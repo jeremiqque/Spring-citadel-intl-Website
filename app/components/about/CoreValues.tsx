@@ -90,7 +90,7 @@ export default function CoreValues() {
   useGSAP(() => {}, { scope: root });
 
   return (
-    <section ref={root} className="side-pad mt-[120px]">
+    <section ref={root} className="side-pad mt-20 sm:mt-[120px]">
       <div className="mx-auto max-w-[1320px]">
         <div className="text-center">
           <Eyebrow>Our Core Values</Eyebrow>

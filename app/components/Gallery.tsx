@@ -11,7 +11,7 @@ export default function Gallery() {
   useGSAP(() => {}, { scope: root });
 
   return (
-    <section ref={root} id="gallery" className="side-pad mt-[120px]">
+    <section ref={root} id="gallery" className="side-pad mt-20 sm:mt-[120px]">
       <div className="mx-auto max-w-[1320px]">
         <div className="flex flex-col items-start justify-between gap-8 lg:flex-row lg:items-end">
           <div>

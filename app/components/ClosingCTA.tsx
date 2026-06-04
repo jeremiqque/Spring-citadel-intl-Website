@@ -9,7 +9,7 @@ export default function ClosingCTA() {
   useGSAP(() => {}, { scope: root });
 
   return (
-    <section ref={root} className="side-pad mt-[120px] mb-[120px]">
+    <section ref={root} className="side-pad mt-20 mb-20 sm:mt-[120px] sm:mb-[120px]">
       <div className="mx-auto max-w-[900px] text-center">
         <h2 className="mx-auto max-w-[18ch] text-[24px] font-medium leading-[1.1]">
           Give Your Child the Right Foundation

@@ -19,7 +19,7 @@ export default function ProgrammesBand() {
   useGSAP(() => {}, { scope: root });
 
   return (
-    <section ref={root} className="side-pad mt-[120px] bg-[#274ac2] py-[100px] text-white">
+    <section ref={root} className="side-pad mt-20 bg-[#274ac2] py-16 text-white sm:mt-[120px] sm:py-[100px]">
       <div className="relative mx-auto max-w-[1320px]">
         <PixelMotif className="absolute -top-6 right-0 hidden sm:block" />
 

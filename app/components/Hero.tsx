@@ -57,7 +57,7 @@ export default function Hero() {
   );
 
   return (
-    <section ref={root} id="home" className="side-pad pt-[80px]">
+    <section ref={root} id="home" className="side-pad pt-12 sm:pt-[80px]">
       <div className="mx-auto flex max-w-[1320px] flex-col items-center text-center">
         <span
           data-hero-badge
@@ -69,7 +69,7 @@ export default function Hero() {
 
         <h1
           ref={heading}
-          className="max-w-[14ch] text-[44px] font-medium leading-[1.05] sm:text-[60px]"
+          className="max-w-[14ch] text-[clamp(34px,11vw,44px)] font-medium leading-[1.05] sm:text-[60px]"
         >
           Welcome to Spring Citadel Int&apos;l School
         </h1>

@@ -14,7 +14,7 @@ export default function ContactHero() {
         {/* Large background typography graphic */}
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 select-none text-center text-[120px] font-bold leading-none text-white/10 sm:text-[200px]"
+          className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 select-none text-center text-[clamp(56px,18vw,120px)] font-bold leading-none text-white/10 sm:text-[200px]"
         >
           CONTACT US
         </span>

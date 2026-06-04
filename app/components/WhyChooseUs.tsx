@@ -18,7 +18,7 @@ export default function WhyChooseUs() {
   useBatchReveal(root, "[data-card]");
 
   return (
-    <section ref={root} className="side-pad mt-[120px]">
+    <section ref={root} className="side-pad mt-20 sm:mt-[120px]">
       <div className="mx-auto max-w-[1320px]">
         <div className="text-center">
           <Eyebrow>Why Choose Us</Eyebrow>
@@ -32,7 +32,7 @@ export default function WhyChooseUs() {
             <div
               key={c}
               data-card
-              className="relative h-[340px] overflow-hidden"
+              className="relative h-[260px] overflow-hidden sm:h-[340px]"
             >
               <Reveal feature className="absolute inset-0">
                 <Placeholder label="" blend={false} className="h-full w-full" />

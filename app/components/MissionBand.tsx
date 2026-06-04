@@ -17,7 +17,7 @@ export default function MissionBand() {
   return (
     <section
       ref={root}
-      className="side-pad mt-[120px] bg-[#274ac2] py-[100px] text-white"
+      className="side-pad mt-20 bg-[#274ac2] py-16 text-white sm:mt-[120px] sm:py-[100px]"
     >
       <div className="mx-auto max-w-[1320px]">
         <div className="flex flex-col items-start justify-between gap-8 lg:flex-row lg:items-end">

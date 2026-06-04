@@ -26,7 +26,7 @@ export default function Footer() {
     <footer
       ref={root}
       id="contact-us"
-      className="side-pad bg-[#274ac2] py-[80px] text-white"
+      className="side-pad bg-[#274ac2] py-12 text-white sm:py-[80px]"
     >
       <div className="mx-auto grid max-w-[1320px] gap-12 lg:grid-cols-3">
         <div>

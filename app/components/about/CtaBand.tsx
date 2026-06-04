@@ -9,7 +9,7 @@ export default function CtaBand() {
   useGSAP(() => {}, { scope: root });
 
   return (
-    <section ref={root} className="side-pad mt-[120px] bg-[#274ac2] py-[80px] text-white">
+    <section ref={root} className="side-pad mt-20 bg-[#274ac2] py-12 text-white sm:mt-[120px] sm:py-[80px]">
       <div className="mx-auto flex max-w-[1320px] flex-col items-start justify-between gap-8 lg:flex-row lg:items-center">
         <p className="max-w-[60ch] text-[18px] leading-relaxed sm:text-[20px]">
           Give your child the advantage of quality education in a safe and

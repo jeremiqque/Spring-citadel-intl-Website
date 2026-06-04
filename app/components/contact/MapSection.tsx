@@ -15,7 +15,7 @@ export default function MapSection() {
   useGSAP(() => {}, { scope: root });
 
   return (
-    <section ref={root} className="side-pad mt-[120px]">
+    <section ref={root} className="side-pad mt-20 sm:mt-[120px]">
       <div className="relative mx-auto max-w-[1320px]">
         <iframe
           src={EMBED_URL}
@@ -26,7 +26,7 @@ export default function MapSection() {
         />
 
         {/* Overlay info card, bottom-left of the map */}
-        <div className="absolute bottom-0 left-0 w-full max-w-[400px] bg-[#274ac2] p-8 text-white sm:p-10">
+        <div className="w-full bg-[#274ac2] p-8 text-white sm:absolute sm:bottom-0 sm:left-0 sm:max-w-[400px] sm:p-10">
           <h2 className="text-[28px] font-bold uppercase tracking-wide">
             Find Us
           </h2>

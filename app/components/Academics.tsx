@@ -52,7 +52,7 @@ export default function Academics() {
     <section
       ref={root}
       id="academics"
-      className="side-pad mt-[120px] bg-[#274ac2] py-[100px] text-white"
+      className="side-pad mt-20 bg-[#274ac2] py-16 text-white sm:mt-[120px] sm:py-[100px]"
     >
       <div className="mx-auto grid max-w-[1320px] items-center gap-12 lg:grid-cols-2 lg:gap-24">
         <Reveal

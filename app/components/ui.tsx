@@ -10,12 +10,14 @@ export function PillButton({
   href = "#",
   className = "",
   arrow = false,
+  swap = false,
 }: {
   children: React.ReactNode;
   tone?: Tone;
   href?: string;
   className?: string;
   arrow?: boolean;
+  swap?: boolean;
 }) {
   const tones: Record<Tone, React.CSSProperties> = {
     ink: { color: "#000", borderColor: "#000", background: "transparent" },
@@ -31,10 +33,25 @@ export function PillButton({
       background: "#fff",
     },
   };
-  const cls = `btn-pill gap-2 font-[var(--font-aeonik)] ${className}`;
+  const cls = `btn-pill gap-2 font-[var(--font-aeonik)] ${swap ? "group" : ""} ${className}`;
   const inner = (
     <>
-      {children}
+      {swap ? (
+        // Text swap: label slides up, identical copy slides in from below.
+        <span className="relative block overflow-hidden">
+          <span className="block transition-transform duration-300 ease-out motion-safe:group-hover:-translate-y-full">
+            {children}
+          </span>
+          <span
+            aria-hidden="true"
+            className="absolute inset-0 block translate-y-full transition-transform duration-300 ease-out motion-safe:group-hover:translate-y-0"
+          >
+            {children}
+          </span>
+        </span>
+      ) : (
+        children
+      )}
       {arrow && <FaArrowRightLong size={18} aria-hidden="true" />}
     </>
   );

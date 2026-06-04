@@ -78,7 +78,7 @@ export default function Academics() {
             learning at every stage of a child&apos;s journey.
           </p>
           <div className="mt-8">
-            <PillButton tone="white" arrow href="/academics">
+            <PillButton tone="white" arrow swap href="/academics">
               Explore Our Academics
             </PillButton>
           </div>

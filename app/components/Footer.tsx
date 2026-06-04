@@ -15,6 +15,7 @@ const QUICK: { label: string; href: string }[] = [
   { label: "About us", href: "/about" },
   { label: "Academics", href: "/academics" },
   { label: "Gallery", href: "/gallery" },
+  { label: "Contact us", href: "/contact" },
 ];
 
 export default function Footer() {

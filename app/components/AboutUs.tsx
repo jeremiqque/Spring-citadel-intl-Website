@@ -66,7 +66,7 @@ export default function AboutUs() {
             and guiding them through challenges with patience and purpose.
           </p>
           <div className="mt-8">
-            <PillButton tone="solid-blue" arrow href="/about">
+            <PillButton tone="solid-blue" arrow swap href="/about">
               Learn More About Us
             </PillButton>
           </div>

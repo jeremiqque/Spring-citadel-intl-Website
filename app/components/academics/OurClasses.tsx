@@ -31,7 +31,7 @@ function ClassCard({ title, sub }: { title: string; sub: string }) {
         {sub}
       </h3>
       <div className="mt-5">
-        <PillButton tone="solid-blue" arrow href="/contact">
+        <PillButton tone="solid-blue" arrow swap href="/contact">
           Contact us
         </PillButton>
       </div>

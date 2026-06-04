@@ -47,18 +47,29 @@ export default function Navbar() {
             <Link
               key={l.label}
               href={l.href}
-              className="text-[18px] opacity-80 transition-colors hover:text-[#274ac2] hover:opacity-100"
+              className="group text-[18px] opacity-80 transition-colors hover:text-[#274ac2] hover:opacity-100"
             >
-              {l.label}
+              {/* Text swap: label slides up, blue copy slides in from below */}
+              <span className="relative block overflow-hidden">
+                <span className="block transition-transform duration-300 ease-out motion-safe:group-hover:-translate-y-full">
+                  {l.label}
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-0 block translate-y-full text-[#274ac2] transition-transform duration-300 ease-out motion-safe:group-hover:translate-y-0"
+                >
+                  {l.label}
+                </span>
+              </span>
             </Link>
           ))}
         </nav>
 
         <div className="flex items-center gap-3">
-          <PillButton tone="outline-blue" className="hidden lg:inline-flex">
+          <PillButton tone="outline-blue" swap className="hidden lg:inline-flex">
             School Portal
           </PillButton>
-          <PillButton tone="solid-blue" href="/contact" className="hidden lg:inline-flex">
+          <PillButton tone="solid-blue" swap href="/contact" className="hidden lg:inline-flex">
             Enroll Now
           </PillButton>
 
@@ -88,10 +99,10 @@ export default function Navbar() {
                 {l.label}
               </Link>
             ))}
-            <PillButton tone="outline-blue" className="mt-3 inline-flex w-full">
+            <PillButton tone="outline-blue" swap className="mt-3 inline-flex w-full">
               School Portal
             </PillButton>
-            <PillButton tone="solid-blue" href="/contact" className="mt-2 inline-flex w-full">
+            <PillButton tone="solid-blue" swap href="/contact" className="mt-2 inline-flex w-full">
               Enroll Now
             </PillButton>
           </div>

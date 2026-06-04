@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { FaArrowRightLong } from "react-icons/fa6";
+import { LuArrowRightToLine } from "react-icons/lu";
 import { useGSAP } from "@/lib/gsap";
 
 export default function AcademicsHeader() {
@@ -13,7 +13,7 @@ export default function AcademicsHeader() {
       <div className="mx-auto max-w-[1320px]">
         <span className="inline-flex items-center gap-2 text-[14px] uppercase tracking-[0.18em] opacity-70">
           Our Academics
-          <FaArrowRightLong size={16} aria-hidden="true" />
+          <LuArrowRightToLine size={18} color="#274ac2" aria-hidden="true" />
         </span>
 
         <h1 className="mt-6 text-[44px] font-medium leading-[1.05] sm:text-[60px]">

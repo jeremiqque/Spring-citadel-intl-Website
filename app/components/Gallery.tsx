@@ -24,7 +24,7 @@ export default function Gallery() {
               the friendships that shape our students.
             </p>
           </div>
-          <PillButton tone="solid-blue" arrow href="/gallery">
+          <PillButton tone="solid-blue" arrow swap href="/gallery">
             View Our Gallery
           </PillButton>
         </div>

@@ -19,7 +19,7 @@ export default function NotFound() {
               Sorry, the content you&apos;re looking for doesn&apos;t exist.
               Either it was removed or the link is wrong.
             </p>
-            <PillButton tone="solid-blue" arrow href="/" className="shrink-0 !px-7 !py-4">
+            <PillButton tone="solid-blue" arrow swap href="/" className="shrink-0 !px-7 !py-4">
               Back to home with a smile
             </PillButton>
           </div>

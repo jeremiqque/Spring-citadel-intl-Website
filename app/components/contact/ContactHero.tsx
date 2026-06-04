@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { FaArrowRightLong } from "react-icons/fa6";
+import { LuArrowRightToLine } from "react-icons/lu";
 import { useGSAP } from "@/lib/gsap";
 
 export default function ContactHero() {
@@ -24,7 +24,7 @@ export default function ContactHero() {
           <div className="mx-auto max-w-[1320px]">
             <span className="inline-flex items-center gap-2 border border-white/60 px-5 py-3 text-[16px]">
               Contact us
-              <FaArrowRightLong size={16} aria-hidden="true" />
+              <LuArrowRightToLine size={18} aria-hidden="true" />
             </span>
 
             <h1 className="mt-8 text-[44px] font-medium leading-[1.05] sm:text-[60px]">

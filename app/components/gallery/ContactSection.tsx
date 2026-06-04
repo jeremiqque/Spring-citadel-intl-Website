@@ -84,9 +84,19 @@ export default function ContactSection({
           </div>
           <button
             type="submit"
-            className="mt-6 w-full bg-[#274ac2] py-4 text-[18px] font-medium text-white transition-opacity hover:opacity-90"
+            className="group mt-6 w-full bg-[#274ac2] py-4 text-[18px] font-medium text-white transition-opacity hover:opacity-90"
           >
-            Submit
+            <span className="relative block overflow-hidden">
+              <span className="block transition-transform duration-300 ease-out motion-safe:group-hover:-translate-y-full">
+                Submit
+              </span>
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 block translate-y-full transition-transform duration-300 ease-out motion-safe:group-hover:translate-y-0"
+              >
+                Submit
+              </span>
+            </span>
           </button>
         </form>
       </div>

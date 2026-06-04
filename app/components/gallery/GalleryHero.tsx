@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { FaArrowRightLong } from "react-icons/fa6";
+import { LuArrowRightToLine } from "react-icons/lu";
 import { useGSAP } from "@/lib/gsap";
 
 export default function GalleryHero() {
@@ -23,9 +23,9 @@ export default function GalleryHero() {
         <div className="absolute inset-0 flex items-start">
           <div className="side-pad w-full pt-12 sm:pt-16">
             <div className="mx-auto max-w-[1320px] text-white">
-              <span className="inline-flex items-center gap-2 border border-white/60 px-5 py-3 text-[16px]">
+              <span className="inline-flex items-center gap-2 bg-white px-5 py-3 text-[16px] text-black">
                 Our Gallery
-                <FaArrowRightLong size={16} aria-hidden="true" />
+                <LuArrowRightToLine size={18} color="#274ac2" aria-hidden="true" />
               </span>
 
               <p className="mt-8 max-w-[60ch] text-[20px] leading-relaxed sm:text-[24px]">

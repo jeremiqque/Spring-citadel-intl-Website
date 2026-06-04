@@ -16,7 +16,7 @@ export default function CtaBand() {
           structured environment. Call us today or visit the school for more
           information.
         </p>
-        <PillButton tone="white" arrow href="/contact" className="shrink-0 !px-7 !py-4">
+        <PillButton tone="white" arrow swap href="/contact" className="shrink-0 !px-7 !py-4">
           Get started today
         </PillButton>
       </div>

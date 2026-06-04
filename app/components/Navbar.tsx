@@ -67,7 +67,7 @@ export default function Navbar() {
 
         <div className="flex items-center gap-3">
           <div className="hidden items-center gap-3 xl:flex">
-            <PillButton tone="outline-blue" swap>
+            <PillButton tone="outline-blue" swap href="/portal">
               School Portal
             </PillButton>
             <PillButton tone="solid-blue" swap href="/contact">
@@ -101,7 +101,7 @@ export default function Navbar() {
                 {l.label}
               </Link>
             ))}
-            <PillButton tone="outline-blue" swap className="mt-3 inline-flex w-full">
+            <PillButton tone="outline-blue" swap href="/portal" className="mt-3 inline-flex w-full">
               School Portal
             </PillButton>
             <PillButton tone="solid-blue" swap href="/contact" className="mt-2 inline-flex w-full">

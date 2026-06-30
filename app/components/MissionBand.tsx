@@ -1,14 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { PillButton } from "./ui";
+import { PillButton, Stat, SCHOOL_STATS } from "./ui";
 import { useCountUp } from "./scroll-hooks";
-
-const STATS = [
-  { num: 98, suffix: "%", value: "98%", label: "WAEC Pass Rate" },
-  { num: 120, suffix: "+", value: "120+", label: "Teaching Staff" },
-  { num: 18, suffix: "+", value: "18+", label: "Years of Excellence" },
-];
 
 export default function MissionBand() {
   const root = useRef<HTMLElement>(null);
@@ -44,17 +38,8 @@ export default function MissionBand() {
         </div>
 
         <div className="mt-16 grid grid-cols-1 gap-10 border-t border-white/20 pt-12 sm:grid-cols-3">
-          {STATS.map((s) => (
-            <div key={s.label} className="text-center">
-              <div
-                data-count={s.num}
-                data-suffix={s.suffix}
-                className="text-[48px] font-medium leading-none sm:text-[60px]"
-              >
-                {s.value}
-              </div>
-              <div className="mt-3 text-[18px] opacity-80">{s.label}</div>
-            </div>
+          {SCHOOL_STATS.map((s) => (
+            <Stat key={s.label} value={s.value} label={s.label} className="text-center" />
           ))}
         </div>
 

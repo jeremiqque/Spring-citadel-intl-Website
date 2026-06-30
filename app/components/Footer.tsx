@@ -6,7 +6,7 @@ import { FaFacebookF, FaInstagram } from "react-icons/fa6";
 import { useGSAP } from "@/lib/gsap";
 
 const SOCIALS = [
-  { label: "Facebook", Icon: FaFacebookF, href: "#" },
+  { label: "Facebook", Icon: FaFacebookF, href: "https://www.facebook.com/springcitadelschool/" },
   { label: "Instagram", Icon: FaInstagram, href: "https://www.instagram.com/spring_citadel/" },
 ];
 
@@ -71,7 +71,7 @@ export default function Footer() {
           <h3 className="text-[18px] font-medium">Contact</h3>
           <ul className="mt-4 space-y-3 text-[16px] opacity-80">
             <li>NTD 153B Tudun Wada, Tunga, Along Tunga Market Tarred Road, Minna, Niger State</li>
-            <li>+234 903 339 4482</li>
+            <li>0909 464 6737</li>
             <li>springcitadelintschool@gmail.com</li>
           </ul>
         </div>

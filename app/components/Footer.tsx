@@ -7,7 +7,7 @@ import { useGSAP } from "@/lib/gsap";
 
 const SOCIALS = [
   { label: "Facebook", Icon: FaFacebookF, href: "#" },
-  { label: "Instagram", Icon: FaInstagram, href: "#" },
+  { label: "Instagram", Icon: FaInstagram, href: "https://www.instagram.com/spring_citadel/" },
 ];
 
 const QUICK: { label: string; href: string }[] = [

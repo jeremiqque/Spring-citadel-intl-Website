@@ -7,7 +7,7 @@ import { useCountUp } from "./scroll-hooks";
 const STATS = [
   { num: 98, suffix: "%", value: "98%", label: "WAEC Pass Rate" },
   { num: 120, suffix: "+", value: "120+", label: "Teaching Staff" },
-  { num: 25, suffix: "+", value: "25+", label: "Years of Excellence" },
+  { num: 18, suffix: "+", value: "18+", label: "Years of Excellence" },
 ];
 
 export default function MissionBand() {

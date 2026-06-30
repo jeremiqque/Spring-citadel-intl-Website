@@ -175,7 +175,7 @@ export function Stat({
 export const SCHOOL_STATS = [
   { value: "98%", label: "WAEC Pass Rate" },
   { value: "120+", label: "Teaching Staff" },
-  { value: "25+", label: "Years of Excellence" },
+  { value: "18+", label: "Years of Excellence" },
 ];
 
 export function Placeholder({

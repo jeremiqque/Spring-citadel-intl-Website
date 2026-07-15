@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * 3D flip card. Flips on hover (desktop) and on click/tap (touch-friendly).
@@ -10,22 +10,42 @@ import { useState } from "react";
 export default function FlipCard({
   front,
   back,
+  backImages,
   className = "",
   style,
 }: {
   front?: React.ReactNode;
   back?: React.ReactNode;
+  backImages?: string[];
   className?: string;
   style?: React.CSSProperties;
 }) {
   const [flipped, setFlipped] = useState(false);
+  const [backSrc, setBackSrc] = useState(() => backImages?.[0]);
+  const timer = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const handleFlip = () => {
+    setFlipped((v) => {
+      const next = !v;
+      // Pick a new random image from the set each time we flip to the back.
+      if (next && backImages && backImages.length) {
+        setBackSrc(backImages[Math.floor(Math.random() * backImages.length)]);
+        // Auto-flip back to the original state after a short pause.
+        clearTimeout(timer.current);
+        timer.current = setTimeout(() => setFlipped(false), 2000);
+      }
+      return next;
+    });
+  };
 
   return (
     <button
       type="button"
       aria-pressed={flipped}
       aria-label="Flip photo"
-      onClick={() => setFlipped((v) => !v)}
+      onClick={handleFlip}
       className={`group [perspective:1000px] ${className}`}
       style={style}
     >
@@ -48,8 +68,17 @@ export default function FlipCard({
         </div>
 
         {/* Back */}
-        <div className="absolute inset-0 flex items-center justify-center bg-[#274ac2] p-3 text-center text-[14px] font-medium leading-tight text-white [backface-visibility:hidden] [transform:rotateY(180deg)]">
-          {back ?? "Spring Citadel"}
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden bg-[#274ac2] text-center text-[14px] font-medium leading-tight text-white [backface-visibility:hidden] [transform:rotateY(180deg)]">
+          {back ??
+            (backSrc ? (
+              <img
+                src={`/${encodeURIComponent(backSrc)}`}
+                alt="Life at Spring Citadel"
+                className="img-luminosity h-full w-full object-cover"
+              />
+            ) : (
+              "Spring Citadel"
+            ))}
         </div>
       </div>
     </button>

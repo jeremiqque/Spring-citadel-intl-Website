@@ -62,4 +62,16 @@ export default function OurClasses() {
       <div className="relative mx-auto max-w-[1320px]">
         <PixelMotif className="absolute right-0 top-0 hidden sm:block" />
 
-        <h2 className="text-center text-[32px] font-medium leading-[1.1] text
+        <h2 className="text-center text-[32px] font-medium leading-[1.1] text-[#274ac2] sm:text-[46px]">
+          Our Classes
+        </h2>
+
+        <div className="mt-14 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          {CLASSES.map((c) => (
+            <ClassCard key={c.title} title={c.title} sub={c.sub} img={c.img} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

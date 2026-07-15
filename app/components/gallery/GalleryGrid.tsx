@@ -7,15 +7,15 @@ import Reveal from "../Reveal";
 
 // Masonry-style spans (col / row) to vary block sizes.
 const BLOCKS = [
-  "col-span-2 row-span-2",
-  "col-span-1 row-span-1",
-  "col-span-1 row-span-2",
-  "col-span-1 row-span-1",
-  "col-span-2 row-span-1",
-  "col-span-1 row-span-2",
-  "col-span-1 row-span-1",
-  "col-span-2 row-span-1",
-  "col-span-1 row-span-1",
+  { span: "col-span-2 row-span-2", src: "scis 01.jpg" },
+  { span: "col-span-1 row-span-1", src: "scis 07.jpg" },
+  { span: "col-span-1 row-span-2", src: "scis 13.jpg" },
+  { span: "col-span-1 row-span-1", src: "scis 23.jpg" },
+  { span: "col-span-2 row-span-1", src: "scis 21.jpg" },
+  { span: "col-span-1 row-span-2", src: "scis 25.jpg" },
+  { span: "col-span-1 row-span-1", src: "scis 12.jpg" },
+  { span: "col-span-2 row-span-1", src: "scis 16.jpg" },
+  { span: "col-span-1 row-span-1", src: "scis 36.jpg" },
 ];
 
 export default function GalleryGrid() {
@@ -28,12 +28,12 @@ export default function GalleryGrid() {
         <PixelMotif className="absolute -top-10 right-0 hidden sm:block" />
 
         <div className="grid auto-rows-[180px] grid-cols-2 gap-5 md:grid-cols-4">
-          {BLOCKS.map((span, i) => (
+          {BLOCKS.map(({ span, src }, i) => (
             <Reveal key={i} className={`overflow-hidden ${span}`}>
-              <div
-                role="img"
-                aria-label="Gallery photo"
-                className="img-luminosity h-full w-full bg-[#274ac2]"
+              <img
+                src={`/${encodeURIComponent(src)}`}
+                alt="Gallery photo"
+                className="img-luminosity h-full w-full object-cover"
               />
             </Reveal>
           ))}

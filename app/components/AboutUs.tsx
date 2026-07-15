@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
-import { Eyebrow, PillButton, Placeholder } from "./ui";
+import { Eyebrow, PillButton } from "./ui";
 import Reveal from "./Reveal";
 
 export default function AboutUs() {
@@ -75,12 +75,12 @@ export default function AboutUs() {
         <Reveal
           feature
           data-col-img
-          className="h-[420px] w-full overflow-hidden rounded-[28px] lg:h-[520px]"
+          className="h-[420px] w-full overflow-hidden lg:h-[520px]"
         >
-          <Placeholder
-            label="About Image"
-            blend={false}
-            className="h-full w-full"
+          <img
+            src={`/${encodeURIComponent("scis 13.jpg")}`}
+            alt="About Spring Citadel"
+            className="h-full w-full object-cover"
           />
         </Reveal>
       </div>

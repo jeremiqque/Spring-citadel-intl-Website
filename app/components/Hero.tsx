@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { gsap, useGSAP, SplitText } from "@/lib/gsap";
-import { PillButton, Placeholder } from "./ui";
+import { PillButton } from "./ui";
 
 export default function Hero() {
   const root = useRef<HTMLElement>(null);
@@ -61,9 +61,12 @@ export default function Hero() {
       <div className="mx-auto flex max-w-[1320px] flex-col items-center text-center">
         <span
           data-hero-badge
-          className="mb-8 inline-flex items-center gap-2 rounded-full border border-black/15 px-4 py-2 text-[14px]"
+          className="border-beam mb-8 inline-flex items-center gap-2 rounded-full border border-black/15 px-4 py-2 text-[14px]"
         >
-          <span className="inline-block h-2 w-2 rounded-full bg-[#274ac2]" />
+          <span className="relative inline-flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#274ac2] opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-[#274ac2]" />
+          </span>
           Est. 2008 · Niger, Nigeria
         </span>
 
@@ -92,12 +95,17 @@ export default function Hero() {
 
           <div className="flex items-center gap-4">
             <div className="flex -space-x-3">
-              {[0, 1, 2, 3].map((i) => (
-                <Placeholder
-                  key={i}
-                  label=""
-                  blend={false}
-                  className="h-11 w-11 rounded-full border-2 border-white"
+              {[
+                "scis 33.jpg",
+                "scis 34.jpg",
+                "scis 35.jpg",
+                "scis 37.jpg",
+              ].map((src) => (
+                <img
+                  key={src}
+                  src={`/${encodeURIComponent(src)}`}
+                  alt=""
+                  className="h-11 w-11 rounded-full border-2 border-white object-cover"
                 />
               ))}
             </div>

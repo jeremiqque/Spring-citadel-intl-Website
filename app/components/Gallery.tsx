@@ -6,6 +6,15 @@ import { Eyebrow, PillButton } from "./ui";
 import Reveal from "./Reveal";
 import FlipCard from "./FlipCard";
 
+const FLIP_SET = [
+  "scis 33.jpg",
+  "scis 34.jpg",
+  "scis 35.jpg",
+  "scis 37.jpg",
+  "scis 31.jpg",
+  "scis 28.jpg",
+];
+
 export default function Gallery() {
   const root = useRef<HTMLElement>(null);
   useGSAP(() => {}, { scope: root });
@@ -31,16 +40,16 @@ export default function Gallery() {
 
         {/* Row of equal tiles — feature photos warm to colour on reveal */}
         <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-3">
-          {[0, 1, 2].map((i) => (
+          {["scis 23.jpg", "scis 12.jpg", "scis 16.jpg"].map((src, i) => (
             <Reveal
               key={i}
               feature
               className="aspect-[351/324] w-full overflow-hidden"
             >
-              <div
-                role="img"
-                aria-label="Gallery photo"
-                className="h-full w-full bg-[#d9d9d9]"
+              <img
+                src={`/${encodeURIComponent(src)}`}
+                alt="Life at Spring Citadel"
+                className="h-full w-full object-cover"
               />
             </Reveal>
           ))}
@@ -48,11 +57,26 @@ export default function Gallery() {
 
         {/* Tilted / scattered row — flip on hover or tap */}
         <div className="mt-24 flex flex-wrap items-center justify-center gap-3 sm:mt-[200px]">
-          {[-8, 7, -8, 7, -8, 7].map((rot, i) => (
+          {[
+            { rot: -8, src: "scis 33.jpg" },
+            { rot: 7, src: "scis 34.jpg" },
+            { rot: -8, src: "scis 35.jpg" },
+            { rot: 7, src: "scis 37.jpg" },
+            { rot: -8, src: "scis 31.jpg" },
+            { rot: 7, src: "scis 28.jpg" },
+          ].map(({ rot, src }, i) => (
             <FlipCard
               key={i}
               className="h-[180px] w-[130px] shrink-0 sm:h-[220px] sm:w-[170px]"
               style={{ transform: `rotate(${rot}deg)` }}
+              backImages={FLIP_SET}
+              front={
+                <img
+                  src={`/${encodeURIComponent(src)}`}
+                  alt="Life at Spring Citadel"
+                  className="img-luminosity h-full w-full object-cover"
+                />
+              }
             />
           ))}
         </div>

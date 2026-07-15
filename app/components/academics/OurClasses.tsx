@@ -6,24 +6,40 @@ import Reveal from "../Reveal";
 import { useBatchReveal } from "../scroll-hooks";
 
 const CLASSES = [
-  { title: "Early Years", sub: "(Pre-Nursery & Nursery 1–3)" },
-  { title: "Primary School", sub: "(Primary 1–6)" },
+  { title: "Early Years", sub: "(Pre-Nursery & Nursery 1–3)", img: "nur 1-3.png" },
+  { title: "Primary School", sub: "(Primary 1–6)", img: "pry1-pry6.png" },
   { title: "Junior Secondary School", sub: "(JSS 1–3)" },
-  { title: "Senior Secondary School", sub: "(SS 1–3)" },
+  { title: "Senior Secondary School", sub: "(SS 1–3)", img: "ss1 -ss3.png" },
 ];
 
-function ClassCard({ title, sub }: { title: string; sub: string }) {
+function ClassCard({
+  title,
+  sub,
+  img,
+}: {
+  title: string;
+  sub: string;
+  img?: string;
+}) {
   return (
     <div
       data-card
       className="transition-transform duration-300 ease-out hover:-translate-y-1.5"
     >
       <Reveal feature className="aspect-[4/5] w-full overflow-hidden">
-        <div
-          role="img"
-          aria-label={`${title} ${sub}`}
-          className="h-full w-full bg-[#274ac2]"
-        />
+        {img ? (
+          <img
+            src={`/${encodeURIComponent(img)}`}
+            alt={`${title} ${sub}`}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div
+            role="img"
+            aria-label={`${title} ${sub}`}
+            className="h-full w-full bg-[#274ac2]"
+          />
+        )}
       </Reveal>
       <h3 className="mt-5 text-[20px] font-medium leading-snug text-[#274ac2]">
         {title}
@@ -54,7 +70,7 @@ export default function OurClasses() {
 
         <div className="mt-14 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {CLASSES.map((c) => (
-            <ClassCard key={c.title} title={c.title} sub={c.sub} />
+            <ClassCard key={c.title} title={c.title} sub={c.sub} img={c.img} />
           ))}
         </div>
       </div>

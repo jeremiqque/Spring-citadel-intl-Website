@@ -22,7 +22,7 @@ export default function FlipCard({
 }) {
   const [flipped, setFlipped] = useState(false);
   const [backSrc, setBackSrc] = useState(() => backImages?.[0]);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
@@ -81,6 +81,3 @@ export default function FlipCard({
             ))}
         </div>
       </div>
-    </button>
-  );
-}

@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
+import Image from "next/image";
 
 export default function HeroImage() {
   const root = useRef<HTMLElement>(null);
@@ -44,11 +45,14 @@ export default function HeroImage() {
 
   return (
     <section ref={root} className="side-pad mt-12 sm:mt-[80px]">
-      <div ref={art}>
-        <img
+      <div ref={art} className="relative h-[420px] w-full sm:h-[560px]">
+        <Image
           src={`/${encodeURIComponent("scis 36.jpg")}`}
           alt="School building"
-          className="img-luminosity h-[420px] w-full object-cover object-[center_65%] sm:h-[560px]"
+          fill
+          priority
+          sizes="100vw"
+          className="img-luminosity object-cover object-[center_65%]"
         />
       </div>
     </section>

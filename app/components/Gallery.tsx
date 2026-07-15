@@ -5,6 +5,7 @@ import { useGSAP } from "@/lib/gsap";
 import { Eyebrow, PillButton } from "./ui";
 import Reveal from "./Reveal";
 import FlipCard from "./FlipCard";
+import Image from "next/image";
 
 const FLIP_SET = [
   "scis 33.jpg",
@@ -46,10 +47,12 @@ export default function Gallery() {
               feature
               className="aspect-[351/324] w-full overflow-hidden"
             >
-              <img
+              <Image
                 src={`/${encodeURIComponent(src)}`}
                 alt="Life at Spring Citadel"
-                className="h-full w-full object-cover"
+                fill
+                sizes="(max-width: 640px) 100vw, 33vw"
+                className="object-cover"
               />
             </Reveal>
           ))}
@@ -71,10 +74,12 @@ export default function Gallery() {
               style={{ transform: `rotate(${rot}deg)` }}
               backImages={FLIP_SET}
               front={
-                <img
+                <Image
                   src={`/${encodeURIComponent(src)}`}
                   alt="Life at Spring Citadel"
-                  className="img-luminosity h-full w-full object-cover"
+                  fill
+                  sizes="170px"
+                  className="img-luminosity object-cover"
                 />
               }
             />

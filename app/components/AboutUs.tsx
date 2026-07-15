@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { Eyebrow, PillButton } from "./ui";
 import Reveal from "./Reveal";
+import Image from "next/image";
 
 export default function AboutUs() {
   const root = useRef<HTMLElement>(null);
@@ -77,10 +78,12 @@ export default function AboutUs() {
           data-col-img
           className="h-[420px] w-full overflow-hidden lg:h-[520px]"
         >
-          <img
+          <Image
             src={`/${encodeURIComponent("scis 13.jpg")}`}
             alt="About Spring Citadel"
-            className="h-full w-full object-cover"
+            fill
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            className="object-cover"
           />
         </Reveal>
       </div>

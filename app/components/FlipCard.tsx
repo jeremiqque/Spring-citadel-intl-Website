@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 /**
  * 3D flip card. Flips on hover (desktop) and on click/tap (touch-friendly).
@@ -71,10 +72,12 @@ export default function FlipCard({
         <div className="absolute inset-0 flex items-center justify-center overflow-hidden bg-[#274ac2] text-center text-[14px] font-medium leading-tight text-white [backface-visibility:hidden] [transform:rotateY(180deg)]">
           {back ??
             (backSrc ? (
-              <img
+              <Image
                 src={`/${encodeURIComponent(backSrc)}`}
                 alt="Life at Spring Citadel"
-                className="img-luminosity h-full w-full object-cover"
+                fill
+                sizes="170px"
+                className="img-luminosity object-cover"
               />
             ) : (
               "Spring Citadel"

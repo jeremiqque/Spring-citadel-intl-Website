@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { gsap, useGSAP, SplitText } from "@/lib/gsap";
 import { PillButton } from "./ui";
+import Image from "next/image";
 
 export default function Hero() {
   const root = useRef<HTMLElement>(null);
@@ -101,10 +102,12 @@ export default function Hero() {
                 "scis 35.jpg",
                 "scis 37.jpg",
               ].map((src) => (
-                <img
+                <Image
                   key={src}
                   src={`/${encodeURIComponent(src)}`}
                   alt=""
+                  width={44}
+                  height={44}
                   className="h-11 w-11 rounded-full border-2 border-white object-cover"
                 />
               ))}

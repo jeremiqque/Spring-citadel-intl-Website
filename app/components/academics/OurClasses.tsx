@@ -1,15 +1,16 @@
 "use client";
 
 import { useRef } from "react";
-import { PillButton, PixelMotif } from "../ui";
+import { PixelMotif } from "../ui";
 import Reveal from "../Reveal";
+import Image from "next/image";
 import { useBatchReveal } from "../scroll-hooks";
 
 const CLASSES = [
-  { title: "Early Years", sub: "(Pre-Nursery & Nursery 1–3)", img: "nur 1-3.png" },
-  { title: "Primary School", sub: "(Primary 1–6)", img: "pry1-pry6.png" },
+  { title: "Early Years", sub: "(Pre-Nursery & Nursery 1–3)", img: "nur 1-3.jpg" },
+  { title: "Primary School", sub: "(Primary 1–6)", img: "pry1-pry6.jpg" },
   { title: "Junior Secondary School", sub: "(JSS 1–3)" },
-  { title: "Senior Secondary School", sub: "(SS 1–3)", img: "ss1 -ss3.png" },
+  { title: "Senior Secondary School", sub: "(SS 1–3)", img: "ss1 -ss3.jpg" },
 ];
 
 function ClassCard({
@@ -26,12 +27,14 @@ function ClassCard({
       data-card
       className="transition-transform duration-300 ease-out hover:-translate-y-1.5"
     >
-      <Reveal feature className="aspect-[4/5] w-full overflow-hidden">
+      <Reveal feature className="aspect-[7/5] w-full overflow-hidden">
         {img ? (
-          <img
+          <Image
             src={`/${encodeURIComponent(img)}`}
             alt={`${title} ${sub}`}
-            className="h-full w-full object-cover"
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            className="object-cover"
           />
         ) : (
           <div
@@ -46,11 +49,6 @@ function ClassCard({
         <br />
         {sub}
       </h3>
-      <div className="mt-5">
-        <PillButton tone="solid-blue" arrow swap href="/contact">
-          Contact us
-        </PillButton>
-      </div>
     </div>
   );
 }
@@ -64,16 +62,4 @@ export default function OurClasses() {
       <div className="relative mx-auto max-w-[1320px]">
         <PixelMotif className="absolute right-0 top-0 hidden sm:block" />
 
-        <h2 className="text-center text-[32px] font-medium leading-[1.1] text-[#274ac2] sm:text-[46px]">
-          Our Classes
-        </h2>
-
-        <div className="mt-14 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {CLASSES.map((c) => (
-            <ClassCard key={c.title} title={c.title} sub={c.sub} img={c.img} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
+        <h2 className="text-center text-[32px] font-medium leading-[1.1] text

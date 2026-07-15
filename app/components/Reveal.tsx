@@ -86,7 +86,7 @@ export default function Reveal({
 
   return (
     <div ref={clip} className={className} {...rest}>
-      <div ref={inner} className="h-full w-full">
+      <div ref={inner} className="relative h-full w-full">
         {children}
       </div>
     </div>

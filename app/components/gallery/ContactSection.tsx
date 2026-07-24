@@ -58,7 +58,13 @@ export default function ContactSection({
               NTD 153B Tudun Wada, Tunga, Along Tunga Market Tarred Road, Minna,
               Niger State
             </InfoRow>
-            <InfoRow icon={ICON.phone}>0909 464 6737</InfoRow>
+            <InfoRow icon={ICON.phone}>
+              0805 200 3667
+              <br />
+              0807 730 8042
+              <br />
+              0805 947 0531
+            </InfoRow>
             <InfoRow icon={ICON.mail}>springcitadelintschool@gmail.com</InfoRow>
             <InfoRow icon={ICON.clock}>
               Mon–Fri 7:30am – 5:00pm

@@ -71,9 +71,7 @@ export default function Footer() {
           <h3 className="text-[18px] font-medium">Contact</h3>
           <ul className="mt-4 space-y-3 text-[16px] opacity-80">
             <li>NTD 153B Tudun Wada, Tunga, Along Tunga Market Tarred Road, Minna, Niger State</li>
-            <li>0805 200 3667</li>
-            <li>0807 730 8042</li>
-            <li>0805 947 0531</li>
+            <li>0805 200 3667, 0807 730 8042, 0805 947 0531</li>
             <li>springcitadelintschool@gmail.com</li>
           </ul>
         </div>

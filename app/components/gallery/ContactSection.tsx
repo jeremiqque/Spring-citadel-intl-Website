@@ -59,11 +59,7 @@ export default function ContactSection({
               Niger State
             </InfoRow>
             <InfoRow icon={ICON.phone}>
-              0805 200 3667
-              <br />
-              0807 730 8042
-              <br />
-              0805 947 0531
+              0805 200 3667, 0807 730 8042, 0805 947 0531
             </InfoRow>
             <InfoRow icon={ICON.mail}>springcitadelintschool@gmail.com</InfoRow>
             <InfoRow icon={ICON.clock}>

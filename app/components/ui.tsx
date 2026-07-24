@@ -11,6 +11,7 @@ export function PillButton({
   className = "",
   arrow = false,
   swap = false,
+  newTab = false,
 }: {
   children: React.ReactNode;
   tone?: Tone;
@@ -18,6 +19,7 @@ export function PillButton({
   className?: string;
   arrow?: boolean;
   swap?: boolean;
+  newTab?: boolean;
 }) {
   const tones: Record<Tone, React.CSSProperties> = {
     ink: { color: "#000", borderColor: "#000", background: "transparent" },
@@ -62,7 +64,12 @@ export function PillButton({
       {inner}
     </Link>
   ) : (
-    <a href={href} className={cls} style={tones[tone]}>
+    <a
+      href={href}
+      className={cls}
+      style={tones[tone]}
+      {...(newTab ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+    >
       {inner}
     </a>
   );

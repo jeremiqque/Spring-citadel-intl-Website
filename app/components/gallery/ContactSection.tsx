@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { FaLocationDot, FaPhone, FaEnvelope, FaRegClock } from "react-icons/fa6";
 import { useGSAP } from "@/lib/gsap";
-import { Field, PixelMotif } from "../ui";
+import { Field, PillButton, PixelMotif } from "../ui";
 
 function InfoRow({
   icon,
@@ -66,6 +66,16 @@ export default function ContactSection({
               Sat 9:00am – 1:00pm
             </InfoRow>
           </div>
+          <PillButton
+            href="https://cal.com/femi-alalade"
+            tone="solid-blue"
+            arrow
+            swap
+            newTab
+            className="mt-8"
+          >
+            Book a call
+          </PillButton>
         </div>
 
         {/* Right: contact form */}

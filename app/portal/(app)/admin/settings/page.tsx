@@ -1,25 +1,32 @@
 import { prisma } from "@/lib/prisma";
 import { getGradingConfig } from "@/lib/grading-settings";
-import { AcademicPeriodForm, GradingPolicyForm } from "./settings-forms";
+import { AcademicPeriodForm, GradingPolicyForm, ChangePasswordForm } from "./settings-forms";
 
 type TermValue = "TERM_1" | "TERM_2" | "TERM_3";
 
 /**
  * Admin settings.
  *
- * Two things live here, both of which used to be reachable only by editing
- * the database or the source:
+ * Three things live here:
  *
  *   1. The academic period (session + term). The grades screen told admins to
  *      "ask whoever administers the database" to set it — for a value that
  *      changes three times a year and without which grade entry is disabled.
  *   2. The grade bands and at-risk rule, which shipped as placeholder
  *      constants marked "NOT YET CONFIRMED BY THE SCHOOL."
+ *   3. Your own password — previously only changeable by hand-editing the
+ *      database to force mustChangePassword back to true and reusing the
+ *      first-login screen. See changePasswordAction in ../../actions.ts.
  *
- * Both are Setting rows. Neither is a migration.
+ * The first two are Setting rows; neither is a migration.
  */
-export default async function AdminSettingsPage() {
-  const [sessionSetting, termSetting, gradingConfig] = await Promise.all([
+export default async function AdminSettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ passwordChanged?: string }>;
+}) {
+  const [{ passwordChanged }, sessionSetting, termSetting, gradingConfig] = await Promise.all([
+    searchParams,
     prisma.setting.findUnique({ where: { key: "currentSession" } }),
     prisma.setting.findUnique({ where: { key: "currentTerm" } }),
     getGradingConfig(),
@@ -37,6 +44,18 @@ export default async function AdminSettingsPage() {
         </p>
       </div>
 
+      {passwordChanged === "1" && (
+        <div
+          role="status"
+          className="rounded-lg border border-emerald-600/30 bg-emerald-600/5 p-3 text-sm text-foreground"
+        >
+          <p className="font-medium">Password changed.</p>
+          <p className="mt-1 text-muted-foreground">
+            Any other device signed in to this account has been signed out.
+          </p>
+        </div>
+      )}
+
       {currentSession === "" && (
         <div
           role="alert"
@@ -52,6 +71,7 @@ export default async function AdminSettingsPage() {
 
       <AcademicPeriodForm initialSession={currentSession} initialTerm={currentTerm} />
       <GradingPolicyForm initial={gradingConfig} />
+      <ChangePasswordForm />
     </div>
   );
 }

@@ -7,7 +7,7 @@ import authConfig from "./auth.config";
 // separate logic layer here.
 const nextAuth = NextAuth(authConfig);
 
-export const middleware = nextAuth.auth;
+export const proxy = nextAuth.auth;
 
 export const config = {
   // Scope middleware to the portal only — the marketing site never enters

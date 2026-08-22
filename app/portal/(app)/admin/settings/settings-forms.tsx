@@ -20,6 +20,7 @@ import {
   DEFAULT_GRADING_CONFIG,
 } from "@/lib/grading";
 import { setAcademicPeriodAction, setGradingConfigAction } from "./actions";
+import { changePasswordAction } from "../../actions";
 
 type TermValue = "TERM_1" | "TERM_2" | "TERM_3";
 
@@ -293,6 +294,104 @@ export function GradingPolicyForm({ initial }: { initial: GradingConfig }) {
         letter a student has already been shown stays as it was. New entries, and averages
         computed across subjects, use the new bands straight away.
       </p>
+    </section>
+  );
+}
+
+/* ── Your password ───────────────────────────────────────────────────────── */
+
+// Deliberately your-own-password only — not "reset someone else's". An
+// admin resetting another user's forgotten password is a different feature
+// (it doesn't require knowing their current one) and belongs on that
+// person's own admin/teacher/student row, not here.
+export function ChangePasswordForm() {
+  const [isPending, startTransition] = useTransition();
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const dirty = currentPassword !== "" || newPassword !== "" || confirmPassword !== "";
+
+  const save = () => {
+    setError(null);
+    startTransition(async () => {
+      // On success this action redirects (see the comment on
+      // changePasswordAction) rather than returning — this line is only
+      // reached at all when it failed validation or the current password
+      // was wrong, so there is no "ok" branch to handle here.
+      const result = await changePasswordAction(
+        { currentPassword, newPassword, confirmPassword },
+        "/portal/admin/settings"
+      );
+      setError(result.error);
+    });
+  };
+
+  return (
+    <section className="rounded-lg border border-border p-4">
+      <h2 className="text-sm font-medium text-foreground">Your password</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Change the password for the account you&apos;re signed in with. This signs every other
+        device out — anywhere else that account is still logged in will be asked to sign in
+        again.
+      </p>
+
+      <div className="mt-4 grid gap-3 sm:max-w-sm">
+        <div>
+          <Label htmlFor="current-password">Current password</Label>
+          <Input
+            id="current-password"
+            type="password"
+            autoComplete="current-password"
+            value={currentPassword}
+            className="mt-1 h-9"
+            onChange={(e) => {
+              setError(null);
+              setCurrentPassword(e.target.value);
+            }}
+          />
+        </div>
+        <div>
+          <Label htmlFor="new-password">New password</Label>
+          <Input
+            id="new-password"
+            type="password"
+            autoComplete="new-password"
+            value={newPassword}
+            className="mt-1 h-9"
+            onChange={(e) => {
+              setError(null);
+              setNewPassword(e.target.value);
+            }}
+          />
+          <p className="mt-1 text-xs text-muted-foreground">At least 10 characters.</p>
+        </div>
+        <div>
+          <Label htmlFor="confirm-password">Confirm new password</Label>
+          <Input
+            id="confirm-password"
+            type="password"
+            autoComplete="new-password"
+            value={confirmPassword}
+            className="mt-1 h-9"
+            onChange={(e) => {
+              setError(null);
+              setConfirmPassword(e.target.value);
+            }}
+          />
+        </div>
+
+        <Button size="field" className="mt-1 w-fit" onClick={save} disabled={isPending || !dirty}>
+          {isPending ? "Saving…" : "Change password"}
+        </Button>
+      </div>
+
+      {error && (
+        <p role="alert" className="mt-2 text-xs text-destructive">
+          {error}
+        </p>
+      )}
     </section>
   );
 }

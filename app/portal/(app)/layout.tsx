@@ -59,7 +59,15 @@ export default async function PortalAppLayout({
       (current.teacher != null && current.teacher.status !== "ACTIVE");
 
     if (revoked) {
-      redirect("/portal/login?reason=session-ended");
+      // Not a plain redirect: the cookie is still a technically-valid JWT
+      // (only the DB-side tokenVersion/status has changed), and this layout
+      // can't delete cookies from a render. Routing through the Route
+      // Handler below actually calls signOut() to clear it — otherwise
+      // middleware's "already logged in" rule bounces the request straight
+      // back into the portal and this check fires again: an infinite
+      // redirect loop between here and /portal/login. See the comment in
+      // app/api/portal/force-signout/route.ts.
+      redirect("/api/portal/force-signout");
     }
   } catch (err) {
     // redirect() throws a control-flow signal — it must not be swallowed by

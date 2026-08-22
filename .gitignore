@@ -23,8 +23,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # env files
-.env
-.env*.local
+.env*
+!.env.example
 
 # vercel
 .vercel
@@ -32,3 +32,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/lib/generated/prisma
+
+# Scratch files from agent sessions. Also keeps Tailwind v4's automatic
+# content detection from scanning them for class candidates.
+_to_delete/

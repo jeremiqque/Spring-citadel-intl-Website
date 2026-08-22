@@ -1,0 +1,420 @@
+// ============================================================================
+// Spring Citadel International School — portal schema
+//
+// Conventions used throughout:
+//   * Soft delete is expressed as `status = INACTIVE`, never a deletedAt
+//     column. Historical grades must survive a student or teacher leaving.
+//   * Money-like integers (scores) are plain Int with bounds enforced in
+//     lib/grading.ts and re-validated server-side on every write.
+//   * Multi-tenancy is deliberately NOT implemented. Adding a School model and
+//     a schoolId column later is a single additive migration; carrying it now
+//     would put an unused foreign key on every query for the whole build.
+// ============================================================================
+
+generator client {
+  // Classic generator: outputs to node_modules/@prisma/client so you import
+  // from "@prisma/client". Prisma 6's init scaffolds the newer "prisma-client"
+  // provider with a custom output dir, which triggers the Turbopack module
+  // resolution bug on Next 16.
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // Pooled connection — used by the app at runtime.
+  url       = env("DATABASE_URL")
+  // Direct connection — used by `prisma migrate`. Migrations need a real
+  // session and break through the pooler.
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum Level {
+  EARLY_YEARS
+  PRIMARY
+  JSS
+  SS
+}
+
+// SS field of study. Senior Secondary students take the five compulsory core
+// subjects plus electives drawn from one field (at least 2 from the field +
+// 1 other). JSS has no field structure, so JSS-only subjects carry an empty
+// `streams` array rather than a placeholder value.
+enum SubjectStream {
+  CORE
+  SCIENCE
+  ARTS
+  COMMERCIAL
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum StudentStatus {
+  ACTIVE
+  AT_RISK
+  INACTIVE
+}
+
+enum TeacherStatus {
+  ACTIVE
+  ON_LEAVE
+  INACTIVE
+}
+
+enum Term {
+  TERM_1
+  TERM_2
+  TERM_3
+}
+
+enum LetterGrade {
+  A
+  B
+  C
+  D
+  F
+}
+
+enum GradeStatus {
+  DRAFT
+  SUBMITTED
+}
+
+enum NotificationType {
+  STUDENT_ENROLLED
+  GRADES_SUBMITTED
+  STUDENT_AT_RISK
+  GRADES_PUBLISHED
+}
+
+// ─── Identity ───────────────────────────────────────────────────────────────
+
+model User {
+  id       String @id @default(uuid())
+  name     String
+  email    String @unique
+  password String // bcrypt hash, cost >= 10
+
+  role Role
+
+  // Set true whenever an admin issues a temporary password. Middleware forces
+  // a change before any other route is reachable. This is what makes dropping
+  // the self-serve reset flow safe: credentials can be handed over on paper
+  // without leaving a permanent shared secret.
+  mustChangePassword Boolean @default(true)
+
+  // Session revocation. Sessions are JWTs with no server-side store, so a
+  // cookie stayed valid for its full 30-day life no matter what happened to
+  // the account: a password reset did not invalidate a stolen session, and
+  // an expelled student or dismissed teacher kept full access until the
+  // token expired (the status gate only runs at login). Every password
+  // change and every deactivation increments this; auth.config.ts compares
+  // the token's copy against the row on each request.
+  tokenVersion Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student       Student?
+  teacher       Teacher?
+  notifications Notification[]
+
+  @@index([role])
+}
+
+// ─── School structure ───────────────────────────────────────────────────────
+
+model Class {
+  id    String @id @default(uuid())
+  name  String // "JSS 3A"
+  code  String @unique // "JSS3A" — used in admission numbers
+  level Level
+
+  // Grade entry is enabled for JSS and SS only in v1. Early Years and Primary
+  // are enrolled and profiled but not scored, because the 20/30/50 assessment
+  // split does not apply to them. Flipping this boolean is the whole change if
+  // the school confirms Primary uses the same scheme.
+  gradingEnabled Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  students    Student[]
+  assignments TeacherAssignment[]
+  grades      Grade[]
+
+  @@index([level])
+}
+
+model Subject {
+  id   String @id @default(uuid())
+  name String
+  code String @unique
+
+  // A subject may be taught at more than one level (Mathematics runs across
+  // JSS and SS), so this is an array rather than a single enum.
+  levels Level[]
+
+  // SS field grouping, confirmed by the school 14 Aug 2026. An array for the
+  // same reason `levels` is: a subject can sit in more than one field —
+  // Geography is listed under both Science and Arts, and the Nigerian
+  // languages are a compulsory core pick that also counts as an Arts
+  // elective. Empty for JSS-only subjects, which have no field structure.
+  streams SubjectStream[]
+
+  // True only for the SS subjects every student must take. The three Nigerian
+  // languages are marked compulsory as a *group* — a student takes one of
+  // Hausa / Igbo / Yoruba, not all three. Enforcing "exactly one of" is a
+  // subject-selection rule, not a column, so it is not modelled here.
+  compulsory Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  assignments      TeacherAssignment[]
+  grades           Grade[]
+  primaryTeachers  Teacher[]           @relation("TeacherPrimarySubject")
+}
+
+// ─── People ─────────────────────────────────────────────────────────────────
+
+model Student {
+  id          String @id @default(uuid())
+  admissionNo String @unique // SCIS/2026/JSS3/001 — see lib/ids.ts
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  classId String
+  class   Class  @relation(fields: [classId], references: [id], onDelete: Restrict)
+
+  dob           DateTime
+  gender        Gender
+  guardianName  String
+  guardianPhone String
+  address       String
+
+  // AT_RISK is derived, never hand-set: recomputed from submitted grades on
+  // every grade write. INACTIVE is the soft delete.
+  status StudentStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  grades Grade[]
+
+  // [classId] alone was a strict leftmost prefix of [classId, status] and
+  // bought nothing.
+  @@index([status])
+  @@index([classId, status])
+}
+
+model Teacher {
+  id      String @id @default(uuid())
+  staffId String @unique // SCIS/TCH/2026/001
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  phone  String
+  gender Gender
+
+  // The teacher's headline subject, shown on their profile and used to filter
+  // the teachers list. What they may actually grade is governed by
+  // TeacherAssignment, not by this field.
+  primarySubjectId String?
+  primarySubject   Subject? @relation("TeacherPrimarySubject", fields: [primarySubjectId], references: [id], onDelete: SetNull)
+
+  // ON_LEAVE keeps the account but blocks login. INACTIVE is the soft delete.
+  status TeacherStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignments TeacherAssignment[]
+  grades      Grade[]
+
+  @@index([status])
+  @@index([primarySubjectId])
+}
+
+// FR-30: admins add and remove a teacher's class assignments. That is a
+// many-to-many with a payload (which subject, in which class), so it needs its
+// own table rather than an array column on Teacher.
+//
+// This table is also the authorisation source: a teacher may only write grades
+// for a (class, subject) pair they hold a row for. That check runs server-side
+// inside the action, never in the UI.
+model TeacherAssignment {
+  id String @id @default(uuid())
+
+  teacherId String
+  teacher   Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  classId String
+  class   Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([teacherId, classId, subjectId])
+  @@index([classId, subjectId])
+  // [teacherId] alone was a strict leftmost prefix of the unique above.
+}
+
+// ─── Grades ─────────────────────────────────────────────────────────────────
+
+model Grade {
+  id String @id @default(uuid())
+
+  studentId String
+  // Restrict, NOT Cascade. The schema header states "historical grades must
+  // survive a student or teacher leaving" — the teacher relation below
+  // honoured that and this one did the opposite, so a single DELETE on User
+  // cascaded User -> Student -> Grade and erased a child's entire academic
+  // history silently. Removal is a soft delete (status = INACTIVE); this
+  // makes the database agree with that.
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+
+  // Restrict, not Cascade: removing a teacher must never delete a child's
+  // results. Teachers are soft-deleted, so this should never fire — it is here
+  // so that a hard delete fails loudly instead of destroying records.
+  teacherId String
+  teacher   Teacher @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+
+  // Denormalised from Student so the admin grades table can filter by class
+  // without a join, and so a student changing class does not silently rewrite
+  // last term's results.
+  classId String
+  class   Class  @relation(fields: [classId], references: [id], onDelete: Restrict)
+
+  term    Term
+  session String // "2026/2027"
+
+  assignment Int // 0–20
+  midterm    Int // 0–30
+  exam       Int // 0–50
+
+  // Both computed server-side from the three components on every write, never
+  // accepted from the client. Stored rather than derived so the grades table
+  // sorts and filters in SQL.
+  total Int
+  grade LetterGrade
+
+  status      GradeStatus @default(DRAFT)
+  submittedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // The single most important constraint in the schema: one result row per
+  // student, per subject, per term, per session. Without it, a double-submit
+  // or a retried request silently duplicates a child's result and every
+  // average computed afterwards is wrong.
+  @@unique([studentId, subjectId, term, session])
+  // [studentId] alone was a strict leftmost prefix of the unique above.
+  // [status] alone was a two-value column the planner would never choose
+  // over a sequential scan. Both dropped.
+  @@index([classId, term, session])
+  @@index([teacherId, status])
+
+  // The admin dashboard groups by (session, term, status); nothing led with
+  // session, so it scanned the whole table on every dashboard load.
+  @@index([session, term, status])
+  // "Submitted today" filtered on submittedAt with no index on it — at 100k
+  // grades, where most are submitted, that read ~90k index entries per load.
+  @@index([status, submittedAt])
+  // The teacher profile counts submissions per (class, subject) for one
+  // teacher, once per assignment.
+  @@index([classId, subjectId, teacherId, status])
+}
+
+// ─── Notifications ──────────────────────────────────────────────────────────
+
+model Notification {
+  id String @id @default(uuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type  NotificationType
+  title String
+  body  String
+  link  String? // in-app route the notification points at
+
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  // Partial-ish index for the unread badge count, which runs on every page.
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+}
+
+// ─── Infrastructure tables ──────────────────────────────────────────────────
+
+// Race-safe sequence for admission and staff numbers.
+//
+// The obvious implementation — count() + 1 — is wrong: two admins enrolling at
+// the same moment both read the same count and mint the same admission number,
+// which is a number the school will write on paper records for years. Instead
+// each key is incremented inside a transaction and the returned value is used.
+//
+// Keys look like "STU:2026:JSS3" and "TCH:2026".
+model Counter {
+  key   String @id
+  value Int    @default(0)
+
+  updatedAt DateTime @updatedAt
+}
+
+// Login attempt counters, shared across every serverless instance.
+//
+// This replaces an in-memory Map that documented its own uselessness: each
+// instance had a private copy and a cold start wiped it, so the effective
+// ceiling was (max x live instances) and it LOOSENED as the platform scaled
+// up under load — precisely when an attack is happening.
+//
+// One row per bucket key ("id:SCIS/2026/JSS3/001" or "ip:41.58.x.x"). The
+// window is fixed, not sliding: `resetAt` is stamped when a window opens and
+// left alone until it lapses, so a blocked attacker cannot extend their own
+// lockout indefinitely by continuing to hammer it — nor shorten it.
+//
+// The increment is a single INSERT ... ON CONFLICT statement (see
+// lib/rate-limit.ts), for the same reason Counter is: read-then-write across
+// two statements lets two concurrent attempts both read the same count and
+// both be allowed.
+model RateLimit {
+  key     String   @id
+  count   Int      @default(0)
+  resetAt DateTime
+
+  updatedAt DateTime @updatedAt
+
+  // Expired rows are swept opportunistically; without this the sweep is a
+  // sequential scan of every login anyone has ever attempted.
+  @@index([resetAt])
+}
+
+// Singleton key/value rows: currentSession ("2026/2027"), currentTerm
+// ("TERM_1"). Kept in the database so the school can roll into a new term
+// from the admin UI without a code change and a redeploy.
+model Setting {
+  key   String @id
+  value String
+
+  updatedAt DateTime @updatedAt
+}

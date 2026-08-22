@@ -12,7 +12,7 @@ export default function NotFound() {
       <Navbar />
 
       <section className="side-pad pt-[100px]">
-        <div className="mx-auto max-w-[1320px]">
+        <div className="mx-auto max-w-[1320px]">npx next start -p 3100
           {/* Top row: message left, button right */}
           <div className="flex flex-col items-start justify-between gap-8 lg:flex-row lg:items-center">
             <p className="max-w-[44ch] text-[18px] font-medium leading-relaxed opacity-80">

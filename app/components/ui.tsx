@@ -124,7 +124,12 @@ export function Field({
   placeholder?: string;
 }) {
   const base =
-    "mt-2 w-full border border-black/20 bg-white px-4 py-3 text-[16px] outline-none focus:border-[#274ac2]";
+    // These render on the marketing site, OUTSIDE .portal — so the scoped
+    // `.portal :focus-visible` rule in globals.css never reached them and
+    // `outline-none` left them with no keyboard focus state whatsoever.
+    // focus-visible (not focus) so a mouse click stays clean.
+    "mt-2 w-full border border-black/20 bg-white px-4 py-3 text-[16px] " +
+    "focus-visible:border-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue";
   return (
     <label className="block">
       <span className="text-[15px] font-medium">

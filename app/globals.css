@@ -1,4 +1,13 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ===========================================================================
+   MARKETING SITE  —  everything below this banner is the public website.
+   Do not let portal tokens leak in here.
+   =========================================================================== */
 
 @theme {
   --color-bg: #ffffff;
@@ -7,6 +16,28 @@
   --color-navy: #14225c;
   --color-red: #e23b3b;
   --color-cream: #f7f4ec;
+  /* ── Type scale ───────────────────────────────────────────────────────
+     There was no type scale at all: ~38 distinct font sizes shipped, of
+     which ~32 were one-off arbitrary values (the login flow alone
+     contributed fifteen, including 13.5px, 14.5px and 15.5px — eyeballed,
+     not derived). These seven rungs cover every real use in the product.
+     Reach for an arbitrary size only when a design genuinely needs a size
+     that is not on the scale, and add a rung if it turns out it does. */
+  --text-2xs: 0.6875rem;  /* 11px — overline, uppercase micro-labels */
+  --text-xs: 0.75rem;     /* 12px — table headers, captions, helper text */
+  --text-sm: 0.875rem;    /* 14px — body default across the portal */
+  --text-base: 1rem;      /* 16px — form fields, marketing body */
+  --text-lg: 1.25rem;     /* 20px — card titles */
+  --text-xl: 1.5rem;      /* 24px — page titles */
+  --text-2xl: 2.125rem;   /* 34px — hero / auth headings */
+
+  /* ── Leading ──────────────────────────────────────────────────────────
+     Six near-identical display leadings were in use (1.05, 1.1, 1.15, 1.18,
+     1.42, 0.9). Three rungs is enough. */
+  --leading-display: 1.1;
+  --leading-heading: 1.25;
+  --leading-body: 1.5;
+
   --font-aeonik: var(--font-aeonik), ui-sans-serif, system-ui, sans-serif;
   --spacing-side: 60px;
   --spacing-section: 120px;
@@ -35,6 +66,22 @@ body {
 /* All site images get the desaturated luminosity treatment */
 .img-luminosity {
   mix-blend-mode: luminosity;
+}
+
+/* Reduced motion — CSS animations are not disabled automatically the way the
+   GSAP components' matchMedia branches are, so stop them here. Covers the
+   hero badge's animate-ping halo and anything added later. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html {
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Border beam — a blue light that travels around the edge of a shape */
@@ -121,5 +168,276 @@ body {
 @media (max-width: 768px) {
   :root {
     --side-pad: 24px;
+  }
+}
+
+/* ===========================================================================
+   PORTAL  —  everything below is scoped to .portal, which is set on the
+   wrapper in app/portal/layout.tsx and nowhere else.
+
+   shadcn/ui wrote these tokens at :root, .dark and a global @layer base.
+   They have been moved under .portal so the marketing site above cannot
+   inherit shadcn's greys, radii, borders or font. Re-running
+   "npx shadcn init" would undo this — after any future init, re-scope and
+   re-run docs/baseline/compare.mjs.
+   =========================================================================== */
+
+.portal {
+  /* Portal now uses the school's brand font (was Inter, chosen for its
+     tabular numerals so grade columns lined up). Aeonik's digits are not
+     guaranteed tabular by default, so the `.portal table` rule further
+     down in this file explicitly requests tabular-nums as a safety net —
+     that's what actually keeps score columns aligned now, not the font
+     choice itself. */
+  --font-sans: var(--font-aeonik), ui-sans-serif, system-ui, sans-serif;
+
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  /* Darkened from the shadcn default (L 0.577) — the audit measured
+     text-destructive on bg-destructive/10 (the Button/Badge destructive
+     treatment) at ~4.1:1, short of the 4.5:1 AA text minimum. This value
+     is close to Tailwind's red-700 and clears AA against both a white
+     background and the destructive/10 tint, without changing the hue. */
+  --destructive: oklch(0.5 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  /* The brand blue, available INSIDE the portal scope.
+     Nine of the portal's most identity-carrying surfaces (active nav item and
+     its indicator bar, skip link, unread badge, selected term tab) were
+     painted with `bg-blue` — a token declared in the global @theme, outside
+     .portal, and therefore not themeable or dark-modeable from here. The
+     literal #274ac2 also appeared 47 times across 20 files. One token, one
+     place to change it. */
+  --brand: #274ac2;
+  --brand-strong: #1f3da6;
+  --brand-tint: color-mix(in oklab, #274ac2 8%, white);
+
+  --focus-ring: var(--brand);
+
+  /* Glossy primary button — Figma "Withdraw Button Container" (node
+     4261:5629), rebuilt in the school blue instead of its grey metallic.
+     Three parts do the work together, and dropping any one of them kills
+     the effect:
+       1. a radial gradient that is DARKEST AT THE CENTRE and lightens
+          toward the edges (the reverse of a normal highlight), which is
+          what makes the surface read as domed rather than flat;
+       2. a 2px inset white top line, the light catching that dome;
+       3. a tight, slightly-negative-spread drop shadow so it sits just
+          above the page instead of floating.
+     Kept as tokens rather than inline hexes so the dark block below can
+     restate them, and so there is one place to retune the ramp. */
+  --btn-glossy-bg: radial-gradient(
+    ellipse at center,
+    #16295f 0%,
+    #1e3a95 25%,
+    #274ac2 50%,
+    #3a5fd6 75%,
+    #5478e6 100%
+  );
+  --btn-glossy-border: #1e3a95;
+  --btn-glossy-shadow:
+    0 4px 4px -3px rgba(0, 0, 0, 0.25),
+    inset 0 2px 0 0 rgba(255, 255, 255, 0.19);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.portal.dark,
+.dark .portal {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+  /* Lifted so it clears a dark surface. */
+  --focus-ring: #7b97ee;
+
+  /* Same dome, lifted a step so it still separates from a dark surface. */
+  --btn-glossy-bg: radial-gradient(
+    ellipse at center,
+    #1e3a95 0%,
+    #274ac2 25%,
+    #3a5fd6 50%,
+    #5478e6 75%,
+    #7b97ee 100%
+  );
+  --btn-glossy-border: #5478e6;
+  --btn-glossy-shadow:
+    0 4px 4px -3px rgba(0, 0, 0, 0.5),
+    inset 0 2px 0 0 rgba(255, 255, 255, 0.22);
+}
+
+/* @theme inline must stay at top level — it only DEFINES utility classes
+   (bg-background, border-border, rounded-lg …). It applies nothing on its
+   own, and the variables it points at exist only inside .portal, so these
+   utilities are inert anywhere else. */
+@theme inline {
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-tint: var(--brand-tint);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* shadcn's base layer, scoped. Originally this set border-color on EVERY
+   element on the site, and font/background/colour on html and body. */
+@layer base {
+  .portal *,
+  .portal *::before,
+  .portal *::after {
+    @apply border-border;
+  }
+
+  /* shadcn ships `outline-ring/50` on the rule above. That only recolours the
+     browser's default focus ring to --ring at 50% alpha - roughly #d0d0d0 on
+     white, about 1.6:1, i.e. invisible. Every element without its own focus
+     style (sidebar links, table name links, pagination, row-action buttons)
+     inherited it, so keyboard focus was untraceable across the whole portal.
+
+     This draws a real 2px ring in the brand blue - about 8:1 on white - with
+     an offset so it reads against both light and dark surfaces, and only on
+     keyboard focus, never on mouse click. */
+  .portal :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* The rule above is scoped to .portal, which left the MARKETING site with
+     nothing: its own controls set `outline-none` and relied on a `focus:`
+     border colour, so keyboard users had no reliable focus indicator on the
+     public pages at all. Same treatment, same blue, using the global
+     marketing token since --focus-ring only exists inside .portal.
+
+     `:where()` keeps specificity at 0 so any component can still override
+     it deliberately, and .portal restates its own rule above regardless. */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-blue);
+    outline-offset: 2px;
+  }
+  .portal {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  /* Safety net for the Inter -> Aeonik swap above: Inter's digits were
+     tabular (same width) by default, which is what actually kept every
+     grade/score column lined up. Aeonik doesn't advertise that, so this
+     requests it explicitly rather than hoping the glyphs line up on their
+     own. Scoped to table cells only — body text elsewhere doesn't need
+     fixed-width digits and it can make ordinary prose look slightly off. */
+  .portal table,
+  .portal [data-numeric] {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Applied by Button's `default` variant (components/ui/button.tsx).
+
+   Hand-authored plain CSS rather than arbitrary-value utilities, so it needs
+   no generation step and cannot silently emit nothing.
+
+   Do NOT write utility-like tokens in comments in this file. Tailwind v4
+   scans CSS sources for class candidates and does not skip comments, so a
+   bracketed example here is compiled as if it were a real class. An earlier
+   version of this comment quoted two arbitrary shadow/image utilities as
+   examples and Tailwind generated a rule from the quoted text, emitting an
+   invalid declaration that failed the build with "Parsing CSS source code
+   failed / Unexpected token Delim('.')". Describe such syntax in prose.
+
+   It sits in @layer components so ordinary utilities still beat it — passing
+   a background class to a Button overrides this as you would expect. */
+@layer components {
+  .btn-glossy {
+    border-width: 1.25px;
+    border-color: var(--btn-glossy-border);
+    background-image: var(--btn-glossy-bg);
+    box-shadow: var(--btn-glossy-shadow);
   }
 }

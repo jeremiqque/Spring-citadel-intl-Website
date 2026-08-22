@@ -41,11 +41,21 @@ export default function MarqueeCTA() {
 
   useGSAP(
     () => {
-      gsap.to(track.current, {
-        xPercent: -50,
-        duration: 150,
-        ease: "none",
-        repeat: -1,
+      const mm = gsap.matchMedia();
+
+      // Infinite scroll — only when the user hasn't asked to reduce motion.
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        gsap.to(track.current, {
+          xPercent: -50,
+          duration: 150,
+          ease: "none",
+          repeat: -1,
+        });
+      });
+
+      // Reduced motion — hold the track still at its start position.
+      mm.add("(prefers-reduced-motion: reduce)", () => {
+        gsap.set(track.current, { xPercent: 0 });
       });
     },
     { scope: root }

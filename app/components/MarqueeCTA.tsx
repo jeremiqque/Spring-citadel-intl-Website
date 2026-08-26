@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import Link from "next/link";
 import { gsap, useGSAP } from "@/lib/gsap";
+import { PillButton } from "./ui";
 
 // One repeating unit: CTA button + headline phrase.
 function Unit({ hidden = false }: { hidden?: boolean }) {
@@ -11,12 +11,14 @@ function Unit({ hidden = false }: { hidden?: boolean }) {
       className="flex shrink-0 items-center gap-10 pr-10"
       aria-hidden={hidden || undefined}
     >
-      <Link
+      <PillButton
+        tone="solid-blue"
+        size="lg"
         href="/contact"
-        className="shrink-0 bg-[#274ac2] px-7 py-4 text-[16px] font-medium uppercase tracking-wide text-white transition-opacity hover:opacity-90"
+        className="shrink-0 uppercase tracking-wide"
       >
         Get in touch today
-      </Link>
+      </PillButton>
       <span className="shrink-0 text-[clamp(40px,6vw,72px)] font-bold uppercase leading-none text-[#274ac2]">
         Ready to enroll your child?
       </span>

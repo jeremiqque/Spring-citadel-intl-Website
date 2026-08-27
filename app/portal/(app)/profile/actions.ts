@@ -236,10 +236,8 @@ export async function updateAvatarAction(base64: string): Promise<ActionResult> 
   await prisma.user.update({
     where: { id: session.user.id },
     data: {
-      avatar: bytes,
+      avatar: new Uint8Array(bytes),
       avatarType: "image/jpeg",
-      // Drives the ?v= cache key on the serving URL. Without touching this
-      // the browser keeps showing the previous photo forever.
       avatarUpdatedAt: new Date(),
     },
   });

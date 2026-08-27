@@ -1,4 +1,7 @@
+import * as React from "react";
 import Link from "next/link";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Book01Icon, UserGroupIcon, Alert01Icon, Award01Icon } from "@hugeicons/core-free-icons";
 import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,6 +12,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
+import { ClassCoverage, type ClassAssignment } from "./class-coverage";
 
 const LEVEL_LABEL: Record<string, string> = {
   EARLY_YEARS: "Early Years",
@@ -38,10 +42,16 @@ const LEVEL_LABEL: Record<string, string> = {
  * a deploy, which is the correct amount of ceremony for a decision this
  * expensive to reverse.
  *
- * Query shape: four grouped queries total, not one per class.
+ * "Who teaches them" is not read-only, though: the Teachers column used to
+ * be a bare count with nowhere to go. ClassCoverage opens the actual
+ * teacher/subject pairs for that class and can add or remove one right
+ * there — the same addAssignmentAction/removeAssignmentAction the teacher
+ * profile and the Subjects page both call.
+ *
+ * Query shape: five grouped queries total, not one per class.
  */
 export default async function AdminClassesPage() {
-  const [classes, studentCounts, atRiskCounts, assignments] = await Promise.all([
+  const [classes, studentCounts, atRiskCounts, assignments, allSubjects, allTeachers] = await Promise.all([
     prisma.class.findMany({ orderBy: [{ level: "asc" }, { name: "asc" }] }),
     prisma.student.groupBy({
       by: ["classId"],
@@ -56,25 +66,51 @@ export default async function AdminClassesPage() {
     prisma.teacherAssignment.findMany({
       // Only assignments whose teacher is still on the staff — an INACTIVE
       // teacher's rows survive (soft delete) and would otherwise be counted
-      // as current cover for a class nobody is teaching.
+      // as current cover for a class nobody is teaching. Full rows, not
+      // just ids, now: ClassCoverage's dialog lists who's assigned, not
+      // just how many.
       where: { teacher: { status: { in: ["ACTIVE", "ON_LEAVE"] } } },
-      select: { classId: true, teacherId: true, subjectId: true },
+      include: { teacher: { include: { user: true } }, subject: true },
+    }),
+    prisma.subject.findMany({ orderBy: { name: "asc" } }),
+    prisma.teacher.findMany({
+      where: { status: { in: ["ACTIVE", "ON_LEAVE"] } },
+      include: { user: true },
+      orderBy: { user: { name: "asc" } },
     }),
   ]);
 
   const studentsByClass = new Map(studentCounts.map((r) => [r.classId, r._count._all]));
   const atRiskByClass = new Map(atRiskCounts.map((r) => [r.classId, r._count._all]));
 
-  const teachersByClass = new Map<string, Set<string>>();
   const subjectsByClass = new Map<string, Set<string>>();
+  const assignmentsByClass = new Map<string, ClassAssignment[]>();
   for (const a of assignments) {
-    if (!teachersByClass.has(a.classId)) teachersByClass.set(a.classId, new Set());
     if (!subjectsByClass.has(a.classId)) subjectsByClass.set(a.classId, new Set());
-    teachersByClass.get(a.classId)!.add(a.teacherId);
+    if (!assignmentsByClass.has(a.classId)) assignmentsByClass.set(a.classId, []);
     subjectsByClass.get(a.classId)!.add(a.subjectId);
+    assignmentsByClass.get(a.classId)!.push({
+      id: a.id,
+      teacherId: a.teacherId,
+      teacherName: a.teacher.user.name,
+      subjectId: a.subjectId,
+      subjectName: a.subject.name,
+    });
   }
 
+  const teacherOptions = allTeachers.map((t) => ({ id: t.id, name: t.user.name }));
+
   const totalStudents = studentCounts.reduce((n, r) => n + r._count._all, 0);
+  const totalAtRisk = atRiskCounts.reduce((n, r) => n + r._count._all, 0);
+  const gradingEnabledCount = classes.filter((c) => c.gradingEnabled).length;
+
+  // Rows grouped under a level header instead of one flat list of 16 —
+  // `classes` is already sorted by level then name, so this is a single pass
+  // that inserts a header whenever the level changes. Without it, four
+  // Early Years/Primary rows of nothing-but-zeros sat directly above the
+  // Junior/Senior Secondary rows where every number actually means
+  // something, and the two read as one undifferentiated block.
+  let lastLevel: string | null = null;
 
   return (
     <div className="space-y-6">
@@ -84,6 +120,57 @@ export default async function AdminClassesPage() {
           {classes.length} classes · {totalStudents} enrolled students
         </p>
       </div>
+
+      {/* Same icon-chip KPI card the dashboard and student profile already
+          use — the page previously had no summary at all, just the subtitle
+          line above and then straight into a 16-row table. */}
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="flex items-center gap-[15px]">
+            <span className="flex size-6 items-center justify-center rounded-full bg-blue-100">
+              <HugeiconsIcon icon={Book01Icon} size={16} className="text-blue-800" />
+            </span>
+            <p className="text-sm font-medium text-foreground">Classes</p>
+          </div>
+          <p data-numeric className="mt-4 text-[28px] font-medium text-foreground">{classes.length}</p>
+          <p className="mt-3 text-xs text-muted-foreground">Across every level, Early Years to SS3</p>
+        </div>
+
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="flex items-center gap-[15px]">
+            <span className="flex size-6 items-center justify-center rounded-full bg-green-100">
+              <HugeiconsIcon icon={UserGroupIcon} size={16} className="text-green-800" />
+            </span>
+            <p className="text-sm font-medium text-foreground">Enrolled students</p>
+          </div>
+          <p data-numeric className="mt-4 text-[28px] font-medium text-foreground">{totalStudents}</p>
+          <p className="mt-3 text-xs text-muted-foreground">Active and at-risk, across all classes</p>
+        </div>
+
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="flex items-center gap-[15px]">
+            <span className="flex size-6 items-center justify-center rounded-full bg-destructive/10">
+              <HugeiconsIcon icon={Alert01Icon} size={16} className="text-destructive" />
+            </span>
+            <p className="text-sm font-medium text-foreground">At-risk students</p>
+          </div>
+          <p data-numeric className="mt-4 text-[28px] font-medium text-foreground">{totalAtRisk}</p>
+          <p className="mt-3 text-xs text-muted-foreground">Flagged by term average, across all classes</p>
+        </div>
+
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="flex items-center gap-[15px]">
+            <span className="flex size-6 items-center justify-center rounded-full bg-violet-100">
+              <HugeiconsIcon icon={Award01Icon} size={16} className="text-violet-800" />
+            </span>
+            <p className="text-sm font-medium text-foreground">Grading enabled</p>
+          </div>
+          <p data-numeric className="mt-4 text-[28px] font-medium text-foreground">
+            {gradingEnabledCount}/{classes.length}
+          </p>
+          <p className="mt-3 text-xs text-muted-foreground">JSS and SS levels, per the school's scheme</p>
+        </div>
+      </section>
 
       <div className="rounded-lg border border-border">
         <Table caption="All classes">
@@ -110,40 +197,63 @@ export default async function AdminClassesPage() {
             {classes.map((c) => {
               const students = studentsByClass.get(c.id) ?? 0;
               const atRisk = atRiskByClass.get(c.id) ?? 0;
-              const teachers = teachersByClass.get(c.id)?.size ?? 0;
               const subjects = subjectsByClass.get(c.id)?.size ?? 0;
+              const showLevelHeader = c.level !== lastLevel;
+              lastLevel = c.level;
               return (
-                <TableRow key={c.id}>
-                  <TableCell>
-                    <Link
-                      href={`/portal/admin/students?class=${c.id}`}
-                      className="hover:underline"
-                    >
-                      {c.name}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">{c.code}</TableCell>
-                  <TableCell>{LEVEL_LABEL[c.level] ?? c.level}</TableCell>
-                  <TableCell>{students}</TableCell>
-                  {/* Plain zero, not a badge, when there are none — a row of
-                      "0" chips reads as a wall of alerts at a glance. */}
-                  <TableCell>
-                    {atRisk === 0 ? (
-                      <span className="text-muted-foreground">0</span>
-                    ) : (
-                      <Badge variant="destructive">{atRisk}</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>{teachers}</TableCell>
-                  <TableCell>{subjects}</TableCell>
-                  <TableCell>
-                    {c.gradingEnabled ? (
-                      <Badge variant="success">Enabled</Badge>
-                    ) : (
-                      <Badge variant="outline">Not graded</Badge>
-                    )}
-                  </TableCell>
-                </TableRow>
+                <React.Fragment key={c.id}>
+                  {showLevelHeader && (
+                    <TableRow className="border-b-0 bg-muted/40 hover:bg-muted/40">
+                      <TableCell
+                        colSpan={8}
+                        className="py-2 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                      >
+                        {LEVEL_LABEL[c.level] ?? c.level}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  <TableRow>
+                    <TableCell>
+                      <Link
+                        href={`/portal/admin/students?class=${c.id}`}
+                        className="hover:underline"
+                      >
+                        {c.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">{c.code}</TableCell>
+                    <TableCell>{LEVEL_LABEL[c.level] ?? c.level}</TableCell>
+                    <TableCell>{students}</TableCell>
+                    {/* Plain zero, not a badge, when there are none — a row
+                        of "0" chips reads as a wall of alerts at a glance. */}
+                    <TableCell>
+                      {atRisk === 0 ? (
+                        <span className="text-muted-foreground">0</span>
+                      ) : (
+                        <Badge variant="destructive">{atRisk}</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <ClassCoverage
+                        classId={c.id}
+                        className={c.name}
+                        assignments={assignmentsByClass.get(c.id) ?? []}
+                        subjects={allSubjects
+                          .filter((s) => s.levels.includes(c.level))
+                          .map((s) => ({ id: s.id, name: s.name }))}
+                        teachers={teacherOptions}
+                      />
+                    </TableCell>
+                    <TableCell>{subjects}</TableCell>
+                    <TableCell>
+                      {c.gradingEnabled ? (
+                        <Badge variant="success">Enabled</Badge>
+                      ) : (
+                        <Badge variant="outline">Not graded</Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                </React.Fragment>
               );
             })}
           </TableBody>
@@ -151,11 +261,13 @@ export default async function AdminClassesPage() {
       </div>
 
       <p className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-        Classes are read-only here on purpose. A class code feeds every admission number
-        issued to that class (<span className="font-mono">SCIS/2026/JSS3/001</span>), and
-        those numbers go on paper records the school keeps for years — changing one after
-        students are enrolled would leave their printed numbers pointing at nothing. Adding
-        or renaming a class is a change to the seed script.
+        The classes themselves are read-only here on purpose. A class code feeds every
+        admission number issued to that class (
+        <span className="font-mono">SCIS/2026/JSS3/001</span>), and those numbers go on
+        paper records the school keeps for years — changing one after students are enrolled
+        would leave their printed numbers pointing at nothing. Adding or renaming a class is
+        a change to the seed script. Who teaches a class is not read-only — open a class's
+        teacher count to see or change its coverage.
       </p>
     </div>
   );

@@ -186,7 +186,13 @@ export async function addAssignmentAction(
     return { ok: false, error: "Could not add the assignment. Please try again." };
   }
 
+  // This also gets called from the Subjects and Classes pages now (see
+  // SubjectCoverage / ClassCoverage) — both show counts derived from the
+  // same TeacherAssignment rows, so both need to hear about a change made
+  // from either of the other two screens.
   revalidatePath(`/portal/admin/teachers/${teacherId}`);
+  revalidatePath("/portal/admin/subjects");
+  revalidatePath("/portal/admin/classes");
 
   return { ok: true };
 }
@@ -209,6 +215,8 @@ export async function removeAssignmentAction(
   }
 
   revalidatePath(`/portal/admin/teachers/${teacherId}`);
+  revalidatePath("/portal/admin/subjects");
+  revalidatePath("/portal/admin/classes");
 
   return { ok: true };
 }

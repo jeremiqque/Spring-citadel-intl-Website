@@ -18,7 +18,7 @@ export default function MissionBand() {
           <h2 className="max-w-[24ch] text-[28px] font-medium leading-[1.1] sm:text-[38px]">
             A School Where Learning Meets Character
           </h2>
-          <PillButton tone="white" arrow swap href="/about" className="!px-7 !py-4">
+          <PillButton tone="white" size="lg" arrow swap href="/about">
             Our Mission &amp; Vision
           </PillButton>
         </div>

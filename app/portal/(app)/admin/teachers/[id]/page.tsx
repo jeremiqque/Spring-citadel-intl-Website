@@ -1,8 +1,22 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Book01Icon,
+  UserGroupIcon,
+  BarChartIcon,
+  Alert01Icon,
+  IdentityCardIcon,
+  Call02Icon,
+  UserCircleIcon,
+  BookOpen01Icon,
+} from "@hugeicons/core-free-icons";
 import { prisma } from "@/lib/prisma";
+import { BackLink } from "@/components/ui/back-link";
 import { submissionStatusFromCounts } from "@/lib/grades";
 import { Badge } from "@/components/ui/badge";
+import { initials } from "@/lib/utils";
+import { InfoCard, InfoRow } from "@/components/ui/info-card";
 import {
   Table,
   TableHeader,
@@ -13,6 +27,13 @@ import {
 } from "@/components/ui/table";
 import { TeacherActions } from "./teacher-actions";
 import { AssignmentManager } from "./assignment-manager";
+
+const TILE_COLOR = {
+  green: { bg: "bg-green-100", text: "text-green-800" },
+  amber: { bg: "bg-amber-100", text: "text-amber-800" },
+  blue: { bg: "bg-blue-100", text: "text-blue-800" },
+  neutral: { bg: "bg-muted", text: "text-muted-foreground" },
+};
 
 function statusBadgeVariant(status: string): "success" | "warning" | "outline" {
   if (status === "ACTIVE") return "success";
@@ -140,37 +161,101 @@ export default async function TeacherProfilePage({
       ])
     : [[], 0];
 
+  const studentsTaught = [...studentsByClass.values()].reduce((sum, n) => sum + n, 0);
+  const submittedAssignments = assignmentDetails.filter((a) => a.submissionStatus === "Submitted").length;
+  const progressColor =
+    assignmentDetails.length === 0
+      ? TILE_COLOR.neutral
+      : submittedAssignments === assignmentDetails.length
+        ? TILE_COLOR.green
+        : submittedAssignments > 0
+          ? TILE_COLOR.amber
+          : TILE_COLOR.neutral;
+
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">{teacher.user.name}</h1>
-          <p className="text-sm text-muted-foreground">
-            {teacher.staffId}
-            {teacher.primarySubject ? ` — ${teacher.primarySubject.name}` : ""}
-          </p>
+      <BackLink href="/portal/admin/teachers" label="Back to teachers" />
+
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-brand/10 text-lg font-semibold text-brand">
+            {initials(teacher.user.name)}
+          </span>
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">{teacher.user.name}</h1>
+            <p className="text-sm text-muted-foreground">
+              {teacher.staffId}
+              {teacher.primarySubject ? ` — ${teacher.primarySubject.name}` : ""}
+            </p>
+          </div>
         </div>
         <Badge variant={statusBadgeVariant(teacher.status)}>{teacher.status.replace("_", " ")}</Badge>
       </div>
 
       <TeacherActions teacherId={teacher.id} status={teacher.status} />
 
-      <section className="max-w-md rounded-lg border border-border p-4">
-        <h2 className="mb-3 text-sm font-medium text-foreground">Staff info</h2>
-        <dl className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <dt className="text-muted-foreground">Phone</dt>
-            <dd>{teacher.phone}</dd>
+      {/* Was a single "Staff info" box and nothing else above the fold —
+          the same icon-chip KPI card used on the dashboard and the student
+          profile, giving an admin the shape of this teacher's workload
+          (how much they're covering, how many kids that touches, how much
+          of this term's grading is actually in) without opening the
+          assignment table below. */}
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="flex items-center gap-[15px]">
+            <span className={"flex size-6 items-center justify-center rounded-full " + TILE_COLOR.blue.bg}>
+              <HugeiconsIcon icon={Book01Icon} size={16} className={TILE_COLOR.blue.text} />
+            </span>
+            <p className="text-sm font-medium text-foreground">Assigned classes</p>
           </div>
-          <div className="flex justify-between">
-            <dt className="text-muted-foreground">Gender</dt>
-            <dd className="capitalize">{teacher.gender.toLowerCase()}</dd>
+          <p data-numeric className="mt-4 text-[28px] font-medium text-foreground">
+            {teacher.assignments.length}
+          </p>
+          <p className="mt-3 text-xs text-muted-foreground">Class/subject pairs across {classIds.length} classes</p>
+        </div>
+
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="flex items-center gap-[15px]">
+            <span className={"flex size-6 items-center justify-center rounded-full " + TILE_COLOR.green.bg}>
+              <HugeiconsIcon icon={UserGroupIcon} size={16} className={TILE_COLOR.green.text} />
+            </span>
+            <p className="text-sm font-medium text-foreground">Students taught</p>
           </div>
-          <div className="flex justify-between">
-            <dt className="text-muted-foreground">Primary subject</dt>
-            <dd>{teacher.primarySubject?.name ?? "—"}</dd>
+          <p data-numeric className="mt-4 text-[28px] font-medium text-foreground">{studentsTaught}</p>
+          <p className="mt-3 text-xs text-muted-foreground">Across their assigned classes</p>
+        </div>
+
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="flex items-center gap-[15px]">
+            <span className={"flex size-6 items-center justify-center rounded-full " + progressColor.bg}>
+              <HugeiconsIcon icon={BarChartIcon} size={16} className={progressColor.text} />
+            </span>
+            <p className="text-sm font-medium text-foreground">Grading progress</p>
           </div>
-        </dl>
+          <p data-numeric className="mt-4 text-[28px] font-medium text-foreground">
+            {assignmentDetails.length === 0 ? "—" : `${submittedAssignments}/${assignmentDetails.length}`}
+          </p>
+          <p className="mt-3 text-xs text-muted-foreground">Assignments submitted this term</p>
+        </div>
+
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="flex items-center gap-[15px]">
+            <span className="flex size-6 items-center justify-center rounded-full bg-destructive/10">
+              <HugeiconsIcon icon={Alert01Icon} size={16} className="text-destructive" />
+            </span>
+            <p className="text-sm font-medium text-foreground">At-risk students</p>
+          </div>
+          <p data-numeric className="mt-4 text-[28px] font-medium text-foreground">{atRiskTotal}</p>
+          <p className="mt-3 text-xs text-muted-foreground">In their assigned classes</p>
+        </div>
+      </section>
+
+      <section className="max-w-md">
+        <InfoCard icon={IdentityCardIcon} color="blue" title="Staff info">
+          <InfoRow icon={Call02Icon} label="Phone" value={teacher.phone} />
+          <InfoRow icon={UserCircleIcon} label="Gender" value={<span className="capitalize">{teacher.gender.toLowerCase()}</span>} />
+          <InfoRow icon={BookOpen01Icon} label="Primary subject" value={teacher.primarySubject?.name ?? "—"} />
+        </InfoCard>
       </section>
 
       <section>

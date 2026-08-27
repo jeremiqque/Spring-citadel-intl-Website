@@ -17,6 +17,7 @@ import { getGradingConfig } from "@/lib/grading-settings";
 import { FILTER_SELECT_CLASSNAME } from "@/lib/filter-select-class";
 import { parseTerm } from "@/lib/validation/id";
 import { GradeEditRow } from "./grade-edit-row";
+import { SubjectBreakdown } from "./subject-breakdown";
 
 // Step 80: this is the page 600 seeded students has to stay under 2 seconds
 // on. The design choice that makes that possible is right here — every
@@ -279,9 +280,12 @@ export default async function AdminGradesPage({
               <TableRow>
                 <TableHead>Admission No.</TableHead>
                 <TableHead>Name</TableHead>
-                {classSubjects.map((sub) => (
-                  <TableHead key={sub.id}>{sub.name}</TableHead>
-                ))}
+                {/* Was one column per subject (11+ headers, wider than the
+                    viewport on every screen it shipped on — the last few
+                    subjects were only reachable by scrolling). "Performance"
+                    is a compact chip strip instead; click it for the full
+                    per-subject breakdown. See subject-breakdown.tsx. */}
+                <TableHead>Performance</TableHead>
                 <TableHead>Average</TableHead>
                 <TableHead>Grade</TableHead>
               </TableRow>
@@ -289,7 +293,7 @@ export default async function AdminGradesPage({
             <TableBody>
               {students.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={classSubjects.length + 4} className="py-8 text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
                     No students match these filters.
                   </TableCell>
                 </TableRow>
@@ -298,6 +302,16 @@ export default async function AdminGradesPage({
                 const studentGrades = gradesByStudent.get(s.id) ?? [];
                 const scoresBySubject = new Map(studentGrades.map((g) => [g.subjectId, g]));
                 const avg = average(studentGrades.map((g) => g.total));
+                const letter = avg === null ? null : scoreToLetter(avg, gradingConfig);
+                const subjectScores = classSubjects.map((sub) => {
+                  const g = scoresBySubject.get(sub.id);
+                  return {
+                    id: sub.id,
+                    name: sub.name,
+                    total: g ? g.total : null,
+                    grade: g ? scoreToLetter(g.total, gradingConfig) : null,
+                  };
+                });
                 return (
                   <TableRow key={s.id}>
                     <TableCell className="font-mono text-xs">{s.admissionNo}</TableCell>
@@ -306,12 +320,18 @@ export default async function AdminGradesPage({
                         {s.user.name}
                       </Link>
                     </TableCell>
-                    {classSubjects.map((sub) => {
-                      const g = scoresBySubject.get(sub.id);
-                      return <TableCell key={sub.id}>{g ? g.total : "—"}</TableCell>;
-                    })}
+                    <TableCell>
+                      <SubjectBreakdown
+                        studentId={s.id}
+                        studentName={s.user.name}
+                        admissionNo={s.admissionNo}
+                        subjects={subjectScores}
+                        average={avg}
+                        letter={letter}
+                      />
+                    </TableCell>
                     <TableCell>{avg === null ? "—" : avg.toFixed(1)}</TableCell>
-                    <TableCell>{avg === null ? "—" : scoreToLetter(avg, gradingConfig)}</TableCell>
+                    <TableCell>{letter ?? "—"}</TableCell>
                   </TableRow>
                 );
               })}

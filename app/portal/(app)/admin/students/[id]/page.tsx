@@ -1,7 +1,21 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  BarChartIcon,
+  Book01Icon,
+  HistoryIcon,
+  IdentityCardIcon,
+  UserGroupIcon,
+  CakeIcon,
+  UserCircleIcon,
+  Call02Icon,
+  Location01Icon,
+} from "@hugeicons/core-free-icons";
 import { prisma } from "@/lib/prisma";
+import { BackLink } from "@/components/ui/back-link";
 import { Badge } from "@/components/ui/badge";
+import { InfoCard, InfoRow } from "@/components/ui/info-card";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
 import {
@@ -12,8 +26,9 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { average, scoreToLetter } from "@/lib/grading";
+import { average, scoreToLetter, GRADE_BAND_CLASS } from "@/lib/grading";
 import { getGradingConfig } from "@/lib/grading-settings";
+import { initials } from "@/lib/utils";
 
 // A student accumulates a grade row per subject per term forever — the
 // history table used to load every one of them via a single unbounded
@@ -26,6 +41,20 @@ function statusBadgeVariant(status: string): "success" | "warning" | "outline" {
   if (status === "AT_RISK") return "warning";
   return "outline";
 }
+
+// Same green/amber/red/neutral read as GRADE_BAND_CLASS, but as separate
+// bg/text pairs rather than one combined string — the KPI tiles below need
+// the two on different elements (a coloured circle, then the icon inside
+// it), matching the icon-chip pattern the admin dashboard already
+// established (see app/portal/(app)/admin/page.tsx).
+const TILE_COLOR = {
+  green: { bg: "bg-green-100", text: "text-green-800" },
+  amber: { bg: "bg-amber-100", text: "text-amber-800" },
+  red: { bg: "bg-destructive/10", text: "text-destructive" },
+  blue: { bg: "bg-blue-100", text: "text-blue-800" },
+  violet: { bg: "bg-violet-100", text: "text-violet-800" },
+  neutral: { bg: "bg-muted", text: "text-muted-foreground" },
+};
 
 export default async function StudentProfilePage({
   params,
@@ -55,7 +84,7 @@ export default async function StudentProfilePage({
     prisma.setting.findUnique({ where: { key: "currentTerm" } }),
   ]);
 
-  const [currentGrades, historyGrades, historyTotal] = await Promise.all([
+  const [currentGrades, historyGrades, historyTotal, classSubjects] = await Promise.all([
     currentSessionSetting && currentTermSetting
       ? prisma.grade.findMany({
           where: { studentId: id, session: currentSessionSetting.value, term: currentTermSetting.value as "TERM_1" | "TERM_2" | "TERM_3" },
@@ -69,6 +98,12 @@ export default async function StudentProfilePage({
       take: HISTORY_PAGE_SIZE,
     }),
     prisma.grade.count({ where: { studentId: id } }),
+    // Same query the grades screen uses to size its subject columns — here
+    // it's the denominator for "how much of this term is actually in yet",
+    // which the page didn't answer at all before: "No grades recorded yet
+    // for the current term" looked identical whether nothing had been
+    // entered or everything except one subject had.
+    prisma.subject.findMany({ where: { levels: { has: student.class.level } }, select: { id: true } }),
   ]);
 
   const currentAverage = average(currentGrades.map((g) => g.total));
@@ -82,14 +117,35 @@ export default async function StudentProfilePage({
     return targetPage > 1 ? `?page=${targetPage}` : "";
   }
 
+  const averageColor =
+    currentLetter === null
+      ? TILE_COLOR.neutral
+      : currentLetter === "F"
+        ? TILE_COLOR.red
+        : currentLetter === "A" || currentLetter === "B"
+          ? TILE_COLOR.green
+          : TILE_COLOR.amber;
+
+  const periodLabel =
+    currentSessionSetting && currentTermSetting
+      ? `${currentSessionSetting.value}, ${currentTermSetting.value.replace("_", " ")}`
+      : null;
+
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">{student.user.name}</h1>
-          <p className="text-sm text-muted-foreground">
-            {student.admissionNo} — {student.class.name}
-          </p>
+      <BackLink href="/portal/admin/students" label="Back to students" />
+
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-brand/10 text-lg font-semibold text-brand">
+            {initials(student.user.name)}
+          </span>
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">{student.user.name}</h1>
+            <p className="text-sm text-muted-foreground">
+              {student.admissionNo} — {student.class.name}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <Badge variant={statusBadgeVariant(student.status)}>{student.status.replace("_", " ")}</Badge>
@@ -99,61 +155,71 @@ export default async function StudentProfilePage({
         </div>
       </div>
 
-      <section className="grid gap-6 sm:grid-cols-2">
-        <div className="rounded-lg border border-border p-4">
-          <h2 className="mb-3 text-sm font-medium text-foreground">Personal details</h2>
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Date of birth</dt>
-              <dd>{student.dob.toLocaleDateString()}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Gender</dt>
-              <dd className="capitalize">{student.gender.toLowerCase()}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Class</dt>
-              <dd>{student.class.name}</dd>
-            </div>
-          </dl>
+      {/* Replaces the old single "Current term average" box, which was the
+          only stat on the page and — with nothing graded yet, the normal
+          state for a student early in a term — left the whole top of the
+          page reading as empty rather than as "nothing's landed yet, here's
+          what's expected." Same icon-chip + label + big-number card the
+          admin dashboard's own KPI row uses (app/portal/(app)/admin/page.tsx),
+          reused rather than a new pattern invented for one screen. */}
+      <section className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="flex items-center gap-[15px]">
+            <span className={"flex size-6 items-center justify-center rounded-full " + averageColor.bg}>
+              <HugeiconsIcon icon={BarChartIcon} size={16} className={averageColor.text} />
+            </span>
+            <p className="text-sm font-medium text-foreground">Current term average</p>
+          </div>
+          <p data-numeric className="mt-4 text-[28px] font-medium text-foreground">
+            {currentAverage === null ? "—" : currentAverage.toFixed(1)}
+            {currentLetter && (
+              <span className="ml-1.5 text-base font-normal text-muted-foreground">({currentLetter})</span>
+            )}
+          </p>
+          <p className="mt-3 text-xs text-muted-foreground">
+            {periodLabel ?? "No academic session is set"}
+          </p>
         </div>
 
-        <div className="rounded-lg border border-border p-4">
-          <h2 className="mb-3 text-sm font-medium text-foreground">Guardian</h2>
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Name</dt>
-              <dd>{student.guardianName}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Phone</dt>
-              <dd>{student.guardianPhone}</dd>
-            </div>
-            <div className="flex justify-between gap-4">
-              <dt className="shrink-0 text-muted-foreground">Address</dt>
-              <dd className="text-right">{student.address}</dd>
-            </div>
-          </dl>
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="flex items-center gap-[15px]">
+            <span className={"flex size-6 items-center justify-center rounded-full " + TILE_COLOR.blue.bg}>
+              <HugeiconsIcon icon={Book01Icon} size={16} className={TILE_COLOR.blue.text} />
+            </span>
+            <p className="text-sm font-medium text-foreground">Subjects graded</p>
+          </div>
+          <p data-numeric className="mt-4 text-[28px] font-medium text-foreground">
+            {classSubjects.length === 0 ? "—" : `${currentGrades.length}/${classSubjects.length}`}
+          </p>
+          <p className="mt-3 text-xs text-muted-foreground">
+            of {classSubjects.length} subjects for {student.class.name} this term
+          </p>
+        </div>
+
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="flex items-center gap-[15px]">
+            <span className={"flex size-6 items-center justify-center rounded-full " + TILE_COLOR.violet.bg}>
+              <HugeiconsIcon icon={HistoryIcon} size={16} className={TILE_COLOR.violet.text} />
+            </span>
+            <p className="text-sm font-medium text-foreground">Lifetime results</p>
+          </div>
+          <p data-numeric className="mt-4 text-[28px] font-medium text-foreground">{historyTotal}</p>
+          <p className="mt-3 text-xs text-muted-foreground">grade entries on record since enrolment</p>
         </div>
       </section>
 
-      <section className="rounded-lg border border-border p-4">
-        <h2 className="mb-1 text-sm font-medium text-foreground">
-          Current term average
-          {currentSessionSetting && currentTermSetting && (
-            <span className="ml-2 font-normal text-muted-foreground">
-              ({currentSessionSetting.value}, {currentTermSetting.value.replace("_", " ")})
-            </span>
-          )}
-        </h2>
-        {currentAverage === null ? (
-          <p className="text-sm text-muted-foreground">No grades recorded yet for the current term.</p>
-        ) : (
-          <p className="text-2xl font-semibold text-foreground">
-            {currentAverage.toFixed(1)}{" "}
-            <span className="text-base font-normal text-muted-foreground">({currentLetter})</span>
-          </p>
-        )}
+      <section className="grid gap-6 sm:grid-cols-2">
+        <InfoCard icon={IdentityCardIcon} color="blue" title="Personal details">
+          <InfoRow icon={CakeIcon} label="Date of birth" value={student.dob.toLocaleDateString()} />
+          <InfoRow icon={UserCircleIcon} label="Gender" value={<span className="capitalize">{student.gender.toLowerCase()}</span>} />
+          <InfoRow icon={Book01Icon} label="Class" value={student.class.name} />
+        </InfoCard>
+
+        <InfoCard icon={UserGroupIcon} color="violet" title="Guardian">
+          <InfoRow icon={UserCircleIcon} label="Name" value={student.guardianName} />
+          <InfoRow icon={Call02Icon} label="Phone" value={student.guardianPhone} />
+          <InfoRow icon={Location01Icon} label="Address" value={student.address} />
+        </InfoCard>
       </section>
 
       <section className="space-y-3">
@@ -179,18 +245,32 @@ export default async function StudentProfilePage({
                       <TableCell>{g.session}</TableCell>
                       <TableCell>{g.term.replace("_", " ")}</TableCell>
                       <TableCell>{g.subject.name}</TableCell>
-                      <TableCell>{g.total}</TableCell>
-                      <TableCell>{g.grade}</TableCell>
+                      <TableCell className="tabular-nums">{g.total}</TableCell>
+                      <TableCell>
+                        {/* Was plain text ("A", "F", ...) — the same coloured
+                            chip the grades overview's subject breakdown uses
+                            (GRADE_BAND_CLASS, lib/grading.ts), so a guardian
+                            or admin scanning years of history can spot a run
+                            of red without reading every row. */}
+                        <span
+                          className={
+                            "inline-flex h-5 min-w-5 items-center justify-center rounded px-1 text-xs font-semibold " +
+                            GRADE_BAND_CLASS[g.grade]
+                          }
+                        >
+                          {g.grade}
+                        </span>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
             <Pagination
-          page={page}
-          totalPages={totalPages}
-          hrefForPage={pageHref}
-        />
+              page={page}
+              totalPages={totalPages}
+              hrefForPage={pageHref}
+            />
           </>
         )}
       </section>

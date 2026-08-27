@@ -90,7 +90,7 @@ export function StudentRowActions({
           <button
             type="button"
             aria-label={`Actions for ${studentName}`}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <HugeiconsIcon icon={MoreHorizontalIcon} size={18} />
           </button>

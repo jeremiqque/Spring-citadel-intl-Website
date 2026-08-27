@@ -15,7 +15,6 @@ import {
   UserCircleIcon,
   BellIcon,
   ArrowLeftDoubleIcon,
-  UserIcon,
   Search01Icon,
   ArrowDown01Icon,
   AiMagicIcon,
@@ -144,73 +143,55 @@ function SidebarBrand({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-// Nav + signed-in-user footer, shared verbatim by the desktop rail and the
-// mobile drawer so the two can never drift apart.
+// The nav list, shared verbatim by the desktop rail and the mobile drawer so
+// the two can never drift apart.
 function SidebarBody({
   sections,
   pathname,
   collapsed,
-  name,
-  role,
   onNavigate,
 }: {
   sections: NavSection[];
   pathname: string;
   collapsed: boolean;
-  name: string;
-  role: Role;
   onNavigate?: () => void;
 }) {
   return (
-    <>
-      <nav aria-label="Main" className="flex flex-1 flex-col gap-[15px] overflow-y-auto px-2.5 pt-6">
-        {sections.map((section) => (
-          <div key={section.section} className="flex flex-col gap-[10px]">
-            {!collapsed && (
-              <p className="px-[10px] text-[10px] text-sidebar-foreground/80">{section.section}</p>
-            )}
-            {section.items.map((item) => {
-              const active = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onNavigate}
-                  aria-current={active ? "page" : undefined}
-                  className={
-                    "relative flex items-center gap-[10px] p-[10px] text-[14px] whitespace-nowrap transition-colors " +
-                    (collapsed ? "justify-center " : "") +
-                    (active ? "bg-brand/10 text-brand" : "text-sidebar-foreground hover:bg-foreground/5")
-                  }
-                >
-                  {active && (
-                    <span className="absolute top-1/2 left-0 h-4 w-[3px] -translate-y-1/2 bg-brand" aria-hidden />
-                  )}
-                  <HugeiconsIcon icon={item.icon} size={24} className="shrink-0" />
-                  {/* Collapsed, the label is the link's only accessible name,
-                      so it stays in the DOM as sr-only rather than being
-                      dropped in favour of a `title` (which screen readers
-                      treat inconsistently and touch users never see). */}
-                  <span className={collapsed ? "sr-only" : undefined}>{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
-
-      <div className="flex shrink-0 flex-col items-center justify-center px-2.5 pb-8">
-        <div className="flex w-full min-w-0 items-center justify-center gap-[10px]">
-          <HugeiconsIcon icon={UserIcon} size={24} className="shrink-0 text-sidebar-foreground" />
+    <nav aria-label="Main" className="flex flex-1 flex-col gap-[15px] overflow-y-auto px-2.5 pt-6">
+      {sections.map((section) => (
+        <div key={section.section} className="flex flex-col gap-[10px]">
           {!collapsed && (
-            <div className="min-w-0 leading-tight text-sidebar-foreground">
-              <p className="truncate text-[14px] font-medium">{name}</p>
-              <p className="truncate text-[10px] capitalize">{role.toLowerCase()}</p>
-            </div>
+            <p className="px-[10px] text-[10px] text-sidebar-foreground/80">{section.section}</p>
           )}
+          {section.items.map((item) => {
+            const active = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onNavigate}
+                aria-current={active ? "page" : undefined}
+                className={
+                  "relative flex items-center gap-[10px] p-[10px] text-[14px] whitespace-nowrap transition-colors " +
+                  (collapsed ? "justify-center " : "") +
+                  (active ? "bg-brand/10 text-brand" : "text-sidebar-foreground hover:bg-foreground/5")
+                }
+              >
+                {active && (
+                  <span className="absolute top-1/2 left-0 h-4 w-[3px] -translate-y-1/2 bg-brand" aria-hidden />
+                )}
+                <HugeiconsIcon icon={item.icon} size={24} className="shrink-0" />
+                {/* Collapsed, the label is the link's only accessible name,
+                    so it stays in the DOM as sr-only rather than being
+                    dropped in favour of a `title` (which screen readers
+                    treat inconsistently and touch users never see). */}
+                <span className={collapsed ? "sr-only" : undefined}>{item.label}</span>
+              </Link>
+            );
+          })}
         </div>
-      </div>
-    </>
+      ))}
+    </nav>
   );
 }
 
@@ -281,13 +262,10 @@ export function PortalShell({
               type="button"
               onClick={() => setCollapsed(true)}
               aria-label="Collapse sidebar"
-              // This corner radius used to be a hardcoded, one-off Figma
-              // pixel value with no equivalent in the app's actual radius
-              // scale (sm/md/lg/xl - see globals.css's --radius-* tokens).
-              // The small utility below is the nearest real step, so this
-              // button's corners now scale with --radius like everything
-              // else instead of being frozen at an arbitrary value.
-              className="flex size-[23px] shrink-0 items-center justify-center rounded-sm bg-muted-foreground text-background"
+              // Fully rounded to match the pill shape now used by every
+              // button in the app (see components/ui/button.tsx) instead of
+              // the hardcoded, one-off Figma pixel radius this used to carry.
+              className="flex size-[23px] shrink-0 items-center justify-center rounded-full bg-muted-foreground text-background"
             >
               <HugeiconsIcon icon={ArrowLeftDoubleIcon} size={18} />
             </button>
@@ -299,7 +277,7 @@ export function PortalShell({
             type="button"
             onClick={() => setCollapsed(false)}
             aria-label="Expand sidebar"
-            className="mx-auto mt-3 flex size-[23px] shrink-0 rotate-180 items-center justify-center rounded-sm bg-muted-foreground text-background"
+            className="mx-auto mt-3 flex size-[23px] shrink-0 rotate-180 items-center justify-center rounded-full bg-muted-foreground text-background"
           >
             <HugeiconsIcon icon={ArrowLeftDoubleIcon} size={18} />
           </button>
@@ -309,8 +287,6 @@ export function PortalShell({
           sections={sections}
           pathname={pathname}
           collapsed={collapsed}
-          name={name}
-          role={role}
         />
       </aside>
 
@@ -325,8 +301,6 @@ export function PortalShell({
             sections={sections}
             pathname={pathname}
             collapsed={false}
-            name={name}
-            role={role}
             onNavigate={() => setMobileOpen(false)}
           />
         </SheetContent>
@@ -420,8 +394,22 @@ export function PortalShell({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="lg" aria-label="Account menu" className="gap-1.5 px-1.5">
-                  <span className="flex size-6 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-foreground">
+                  {/* relative wrapper just for the dot: sizing the avatar
+                      itself off Cal.com's live DOM, then a small green
+                      presence dot pinned to its bottom-right corner, cut out
+                      from the avatar with a background-coloured ring so it
+                      reads as sitting ON the circle rather than overlapping
+                      it. Static "online" for now — there's no presence
+                      tracking in this app yet, same honesty rule as every
+                      other "not wired up yet" control (see Ask AI above):
+                      this is decorative until real presence exists, not a
+                      claim about it. */}
+                  <span className="relative flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-foreground">
                     {(name || "?").trim().charAt(0).toUpperCase()}
+                    <span
+                      aria-hidden="true"
+                      className="absolute -right-0.5 -bottom-0.5 size-2 rounded-full bg-green-500 ring-2 ring-background"
+                    />
                   </span>
                   <HugeiconsIcon icon={ArrowDown01Icon} size={16} />
                 </Button>
@@ -446,8 +434,16 @@ export function PortalShell({
                   exists today — no placeholder rows. */}
               <DropdownMenuContent
                 align="end"
-                sideOffset={8}
-                className="w-[200px] max-w-[calc(100vw-2rem)] rounded-[10px] p-1 shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.05),0px_4px_6px_-4px_rgba(0,0,0,0.05)]"
+                // 10px, not the previous 8px — Cal.com's own popover sits
+                // with a clearer breath of air below the trigger than 8px
+                // read as; close enough to matter once you're looking for it.
+                sideOffset={10}
+                // Shadow alpha doubled from .05 to .1 (the standard
+                // Tailwind shadow-lg formula). At .05 the menu barely lifted
+                // off the page — border-border was doing all the separating
+                // work and the surface looked flatter than Cal.com's, which
+                // has real elevation even on a light popover.
+                className="w-[200px] max-w-[calc(100vw-2rem)] rounded-[10px] p-1 shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-4px_rgba(0,0,0,0.1)]"
               >
                 {/* Cal.com shows the signed-in name as a plain muted label —
                     no avatar, no email. The role badge moved out with the

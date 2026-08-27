@@ -157,7 +157,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-2.5 flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+                    className="absolute right-2.5 flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     <HugeiconsIcon icon={showPassword ? ViewOffSlashIcon : ViewIcon} size={19} />

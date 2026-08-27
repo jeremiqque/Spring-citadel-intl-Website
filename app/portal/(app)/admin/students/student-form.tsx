@@ -98,83 +98,102 @@ export function StudentForm({
 
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="max-w-xl space-y-5">
-        <div>
-          <Label htmlFor="name">Full name</Label>
-          <Input id="name" className="mt-2" aria-invalid={!!errors.name} {...register("name")} />
-          {errors.name && <p className="mt-1 text-sm text-destructive">{errors.name.message}</p>}
+      {/* Was seven fields in one flat column, no grouping, at a width that
+          left most of the page empty on any screen over ~700px — the same
+          "single boring column" problem the settings screens had before
+          those got split into named sections. Grouped into two named
+          sections instead, with short fields (date of birth/gender,
+          guardian name/phone) paired side by side rather than each getting
+          its own full-width row. */}
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="max-w-2xl space-y-8">
+        <div className="space-y-5">
+          <h2 className="text-sm font-medium text-foreground">Student details</h2>
+
+          <div>
+            <Label htmlFor="name">Full name</Label>
+            <Input id="name" className="mt-2" aria-invalid={!!errors.name} {...register("name")} />
+            {errors.name && <p className="mt-1 text-sm text-destructive">{errors.name.message}</p>}
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="dob">Date of birth</Label>
+              <Input id="dob" type="date" className="mt-2" aria-invalid={!!errors.dob} {...register("dob")} />
+              {errors.dob && <p className="mt-1 text-sm text-destructive">{errors.dob.message}</p>}
+            </div>
+
+            <div>
+              <Label>Gender</Label>
+              <Select
+                value={gender}
+                onValueChange={(v) => setValue("gender", v as "MALE" | "FEMALE", { shouldValidate: true })}
+              >
+                <SelectTrigger className="mt-2">
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MALE">Male</SelectItem>
+                  <SelectItem value="FEMALE">Female</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.gender && <p className="mt-1 text-sm text-destructive">{errors.gender.message}</p>}
+            </div>
+          </div>
+
+          <div>
+            <Label>Class</Label>
+            <Select value={classId} onValueChange={(v) => setValue("classId", v, { shouldValidate: true })}>
+              <SelectTrigger className="mt-2">
+                <SelectValue placeholder="Select class" />
+              </SelectTrigger>
+              <SelectContent>
+                {classes.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.classId && <p className="mt-1 text-sm text-destructive">{errors.classId.message}</p>}
+          </div>
         </div>
 
-        <div>
-          <Label htmlFor="dob">Date of birth</Label>
-          <Input id="dob" type="date" className="mt-2" aria-invalid={!!errors.dob} {...register("dob")} />
-          {errors.dob && <p className="mt-1 text-sm text-destructive">{errors.dob.message}</p>}
-        </div>
+        <div className="space-y-5 border-t border-border pt-6">
+          <h2 className="text-sm font-medium text-foreground">Guardian details</h2>
 
-        <div>
-          <Label>Gender</Label>
-          <Select
-            value={gender}
-            onValueChange={(v) => setValue("gender", v as "MALE" | "FEMALE", { shouldValidate: true })}
-          >
-            <SelectTrigger className="mt-2">
-              <SelectValue placeholder="Select gender" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="MALE">Male</SelectItem>
-              <SelectItem value="FEMALE">Female</SelectItem>
-            </SelectContent>
-          </Select>
-          {errors.gender && <p className="mt-1 text-sm text-destructive">{errors.gender.message}</p>}
-        </div>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="guardianName">Guardian full name</Label>
+              <Input
+                id="guardianName"
+                className="mt-2"
+                aria-invalid={!!errors.guardianName}
+                {...register("guardianName")}
+              />
+              {errors.guardianName && (
+                <p className="mt-1 text-sm text-destructive">{errors.guardianName.message}</p>
+              )}
+            </div>
 
-        <div>
-          <Label>Class</Label>
-          <Select value={classId} onValueChange={(v) => setValue("classId", v, { shouldValidate: true })}>
-            <SelectTrigger className="mt-2">
-              <SelectValue placeholder="Select class" />
-            </SelectTrigger>
-            <SelectContent>
-              {classes.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.classId && <p className="mt-1 text-sm text-destructive">{errors.classId.message}</p>}
-        </div>
+            <div>
+              <Label htmlFor="guardianPhone">Guardian phone number</Label>
+              <Input
+                id="guardianPhone"
+                className="mt-2"
+                aria-invalid={!!errors.guardianPhone}
+                {...register("guardianPhone")}
+              />
+              {errors.guardianPhone && (
+                <p className="mt-1 text-sm text-destructive">{errors.guardianPhone.message}</p>
+              )}
+            </div>
+          </div>
 
-        <div>
-          <Label htmlFor="guardianName">Guardian full name</Label>
-          <Input
-            id="guardianName"
-            className="mt-2"
-            aria-invalid={!!errors.guardianName}
-            {...register("guardianName")}
-          />
-          {errors.guardianName && (
-            <p className="mt-1 text-sm text-destructive">{errors.guardianName.message}</p>
-          )}
-        </div>
-
-        <div>
-          <Label htmlFor="guardianPhone">Guardian phone number</Label>
-          <Input
-            id="guardianPhone"
-            className="mt-2"
-            aria-invalid={!!errors.guardianPhone}
-            {...register("guardianPhone")}
-          />
-          {errors.guardianPhone && (
-            <p className="mt-1 text-sm text-destructive">{errors.guardianPhone.message}</p>
-          )}
-        </div>
-
-        <div>
-          <Label htmlFor="address">Address</Label>
-          <Input id="address" className="mt-2" aria-invalid={!!errors.address} {...register("address")} />
-          {errors.address && <p className="mt-1 text-sm text-destructive">{errors.address.message}</p>}
+          <div>
+            <Label htmlFor="address">Address</Label>
+            <Input id="address" className="mt-2" aria-invalid={!!errors.address} {...register("address")} />
+            {errors.address && <p className="mt-1 text-sm text-destructive">{errors.address.message}</p>}
+          </div>
         </div>
 
         {formError && (

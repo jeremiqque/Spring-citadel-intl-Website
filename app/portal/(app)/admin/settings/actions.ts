@@ -125,6 +125,8 @@ export async function setGradingConfigAction(
  */
 function revalidateEverythingSettingsTouch() {
   revalidatePath("/portal/admin/settings");
+  revalidatePath("/portal/admin/settings/academic-period");
+  revalidatePath("/portal/admin/settings/grading-policy");
   revalidatePath("/portal/admin");
   revalidatePath("/portal/admin/grades");
   revalidatePath("/portal/teacher");

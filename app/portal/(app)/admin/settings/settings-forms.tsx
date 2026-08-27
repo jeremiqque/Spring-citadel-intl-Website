@@ -65,7 +65,6 @@ export function AcademicPeriodForm({
 
   return (
     <section className="rounded-lg border border-border p-4">
-      <h2 className="text-sm font-medium text-foreground">Academic period</h2>
       <p className="mt-1 text-xs text-muted-foreground">
         Every result is filed against a session and term. New grades are recorded under
         whatever is set here, and the results screens open on it by default.
@@ -195,7 +194,6 @@ export function GradingPolicyForm({ initial }: { initial: GradingConfig }) {
 
   return (
     <section className="rounded-lg border border-border p-4">
-      <h2 className="text-sm font-medium text-foreground">Grading policy</h2>
       <p className="mt-1 text-xs text-muted-foreground">
         The minimum total (out of 100) for each letter, and the rule that flags a student
         as at-risk. These were developer placeholders until the school confirmed them —
@@ -322,7 +320,7 @@ export function ChangePasswordForm() {
       // was wrong, so there is no "ok" branch to handle here.
       const result = await changePasswordAction(
         { currentPassword, newPassword, confirmPassword },
-        "/portal/admin/settings"
+        "/portal/admin/settings/password"
       );
       setError(result.error);
     });
@@ -330,7 +328,6 @@ export function ChangePasswordForm() {
 
   return (
     <section className="rounded-lg border border-border p-4">
-      <h2 className="text-sm font-medium text-foreground">Your password</h2>
       <p className="mt-1 text-xs text-muted-foreground">
         Change the password for the account you&apos;re signed in with. This signs every other
         device out — anywhere else that account is still logged in will be asked to sign in

@@ -90,7 +90,7 @@ export default function Hero() {
           data-hero-cta
           className="mt-10 flex flex-col items-center gap-8 sm:flex-row sm:gap-10"
         >
-          <PillButton tone="solid-blue" arrow swap href="/contact" className="!px-7 !py-4">
+          <PillButton tone="solid-blue" size="lg" arrow swap href="/contact">
             Start Learning Today
           </PillButton>
 

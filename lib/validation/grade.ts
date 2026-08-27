@@ -13,5 +13,3 @@ export const gradeInputSchema = z.object({
   midterm: z.coerce.number().int().min(0).max(30),
   exam: z.coerce.number().int().min(0).max(50),
 });
-
-export type GradeInputValues = z.infer<typeof gradeInputSchema>;

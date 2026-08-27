@@ -78,7 +78,7 @@ function PasswordField({
         <button
           type="button"
           onClick={onToggleVisible}
-          className="absolute right-2.5 flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="absolute right-2.5 flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
           aria-label={visible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
         >
           <HugeiconsIcon icon={visible ? ViewOffSlashIcon : ViewIcon} size={19} />

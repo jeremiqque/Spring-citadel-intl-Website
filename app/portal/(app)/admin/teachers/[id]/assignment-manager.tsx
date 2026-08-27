@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import {
   Dialog,
@@ -31,6 +32,12 @@ type Assignment = {
 };
 type ClassOption = { id: string; name: string; level: string };
 type SubjectOption = { id: string; name: string; levels: string[] };
+
+function submissionBadgeVariant(status: Assignment["submissionStatus"]): "success" | "warning" | "outline" {
+  if (status === "Submitted") return "success";
+  if (status === "In progress") return "warning";
+  return "outline";
+}
 
 export function AssignmentManager({
   teacherId,
@@ -155,7 +162,9 @@ export function AssignmentManager({
                 <TableRow key={a.id}>
                   <TableCell>{a.className}</TableCell>
                   <TableCell>{a.subjectName}</TableCell>
-                  <TableCell>{a.submissionStatus}</TableCell>
+                  <TableCell>
+                    <Badge variant={submissionBadgeVariant(a.submissionStatus)}>{a.submissionStatus}</Badge>
+                  </TableCell>
                   <TableCell className="text-right">
                     <Button
                       variant="outline"

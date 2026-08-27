@@ -7,6 +7,7 @@ type Tone = "ink" | "white" | "solid-blue" | "outline-blue";
 export function PillButton({
   children,
   tone = "ink",
+  size = "default",
   href = "#",
   className = "",
   arrow = false,
@@ -15,6 +16,10 @@ export function PillButton({
 }: {
   children: React.ReactNode;
   tone?: Tone;
+  // "lg" is the hero/CTA tier. Previously every large call site typed its
+  // own `!px-7 !py-4` override on top of .btn-pill — same button, three
+  // different sizes by accident. This is that size as a real variant.
+  size?: "default" | "lg";
   href?: string;
   className?: string;
   arrow?: boolean;
@@ -35,7 +40,7 @@ export function PillButton({
       background: "#fff",
     },
   };
-  const cls = `btn-pill gap-2 font-[var(--font-aeonik)] ${swap ? "group" : ""} ${className}`;
+  const cls = `btn-pill ${size === "lg" ? "btn-pill--lg" : ""} gap-2 font-[var(--font-aeonik)] ${swap ? "group" : ""} ${className}`;
   const inner = (
     <>
       {swap ? (

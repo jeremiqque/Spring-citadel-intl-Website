@@ -11,6 +11,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
+import { SubjectCoverage, type SubjectAssignment } from "./subject-coverage";
 
 const LEVEL_LABEL: Record<string, string> = {
   EARLY_YEARS: "Early Years",
@@ -30,19 +31,20 @@ const LEVELS = ["EARLY_YEARS", "PRIMARY", "JSS", "SS"] as const;
 type LevelValue = (typeof LEVELS)[number];
 
 /**
- * Subjects — read-only.
+ * Subjects — the curriculum is read-only here, coverage is not.
  *
- * Read-only for a narrower reason than Classes: `Subject.code` does not feed
- * anything printed, but a subject's `levels` array decides which classes it
- * can be assigned to and therefore which grade sheets exist, and `streams`
- * encodes the SS field structure the school confirmed on 14 Aug 2026.
- * Editing those is a curriculum decision, not an admin task, and the seed
- * script is where it is recorded.
+ * `Subject.code` does not feed anything printed, but a subject's `levels`
+ * array decides which classes it can be assigned to and therefore which
+ * grade sheets exist, and `streams` encodes the SS field structure the
+ * school confirmed on 14 Aug 2026. Editing those is a curriculum decision,
+ * not an admin task, and the seed script is where it is recorded.
  *
- * What this screen is FOR: seeing what the curriculum actually contains, per
- * level, and which subjects have nobody assigned to teach them — that last
- * column is the one an admin can act on, by going to a teacher's profile and
- * adding an assignment.
+ * "Teachers assigned" is the one column that is not read-only: it used to
+ * just be a count that sent an admin off to a teacher's profile to actually
+ * do anything about it. SubjectCoverage opens the same list right here, and
+ * calls the same addAssignmentAction/removeAssignmentAction the teacher
+ * profile's AssignmentManager does — one underlying mutation, reachable from
+ * whichever screen the admin happened to be looking at a gap on.
  */
 export default async function AdminSubjectsPage({
   searchParams,
@@ -58,34 +60,42 @@ export default async function AdminSubjectsPage({
   const rawLevel = firstParam(params.level);
   const level = LEVELS.includes(rawLevel as LevelValue) ? (rawLevel as LevelValue) : undefined;
 
-  const [subjects, assignments] = await Promise.all([
+  const [subjects, assignments, allClasses, allTeachers] = await Promise.all([
     prisma.subject.findMany({
       where: level ? { levels: { has: level } } : {},
       orderBy: { name: "asc" },
     }),
-    // One query for coverage across every subject, rather than a count per
-    // row. ON_LEAVE teachers still count as assigned — the class is covered
-    // on paper, and an admin looking for gaps wants the subjects with nobody
-    // at all.
-    //
-    // Rows, not counts, because the column is "teachers" and
-    // TeacherAssignment is unique on (teacherId, classId, subjectId) — one
-    // row per class. Counting rows made the only Mathematics teacher, who
-    // covers JSS 1-3, render as "3 teachers assigned", and disagreed with the
-    // Classes page, which de-duplicates the identical data.
+    // Full rows, not just counts — SubjectCoverage's dialog lists who's
+    // assigned, not just how many. ON_LEAVE teachers still count as
+    // assigned — the class is covered on paper, and an admin looking for
+    // gaps wants the subjects with nobody at all.
     prisma.teacherAssignment.findMany({
       where: { teacher: { status: { in: ["ACTIVE", "ON_LEAVE"] } } },
-      select: { subjectId: true, teacherId: true },
+      include: { teacher: { include: { user: true } }, class: true },
+    }),
+    prisma.class.findMany({ orderBy: [{ level: "asc" }, { name: "asc" }] }),
+    prisma.teacher.findMany({
+      where: { status: { in: ["ACTIVE", "ON_LEAVE"] } },
+      include: { user: true },
+      orderBy: { user: { name: "asc" } },
     }),
   ]);
 
-  const teachersBySubject = new Map<string, Set<string>>();
+  const assignmentsBySubject = new Map<string, SubjectAssignment[]>();
   for (const a of assignments) {
-    if (!teachersBySubject.has(a.subjectId)) teachersBySubject.set(a.subjectId, new Set());
-    teachersBySubject.get(a.subjectId)!.add(a.teacherId);
+    if (!assignmentsBySubject.has(a.subjectId)) assignmentsBySubject.set(a.subjectId, []);
+    assignmentsBySubject.get(a.subjectId)!.push({
+      id: a.id,
+      teacherId: a.teacherId,
+      teacherName: a.teacher.user.name,
+      classId: a.classId,
+      className: a.class.name,
+    });
   }
 
-  const uncovered = subjects.filter((s) => !teachersBySubject.has(s.id)).length;
+  const teacherOptions = allTeachers.map((t) => ({ id: t.id, name: t.user.name }));
+
+  const uncovered = subjects.filter((s) => !assignmentsBySubject.has(s.id)).length;
 
   return (
     <div className="space-y-6">
@@ -139,7 +149,10 @@ export default async function AdminSubjectsPage({
               </TableRow>
             )}
             {subjects.map((s) => {
-              const assigned = teachersBySubject.get(s.id)?.size ?? 0;
+              const subjectAssignments = assignmentsBySubject.get(s.id) ?? [];
+              const subjectClasses = allClasses
+                .filter((c) => s.levels.includes(c.level))
+                .map((c) => ({ id: c.id, name: c.name }));
               return (
                 <TableRow key={s.id}>
                   <TableCell>
@@ -175,13 +188,16 @@ export default async function AdminSubjectsPage({
                     )}
                   </TableCell>
                   {/* The actionable column: a subject with nobody assigned
-                      has no grade sheet and no one able to mark it. */}
+                      has no grade sheet and no one able to mark it. Click
+                      through to see who, or assign someone right here. */}
                   <TableCell>
-                    {assigned === 0 ? (
-                      <Badge variant="warning">None</Badge>
-                    ) : (
-                      assigned
-                    )}
+                    <SubjectCoverage
+                      subjectId={s.id}
+                      subjectName={s.name}
+                      assignments={subjectAssignments}
+                      classes={subjectClasses}
+                      teachers={teacherOptions}
+                    />
                   </TableCell>
                 </TableRow>
               );
@@ -191,10 +207,11 @@ export default async function AdminSubjectsPage({
       </div>
 
       <p className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-        Subjects are read-only here. Which levels a subject runs at decides which grade
-        sheets exist, and the SS field groupings are the curriculum the school confirmed —
-        both are changes to the seed script rather than admin tasks. To give a subject a
-        teacher, open that teacher&apos;s profile and add a class assignment.
+        The curriculum itself is read-only here. Which levels a subject runs at decides which
+        grade sheets exist, and the SS field groupings are the curriculum the school
+        confirmed — both are changes to the seed script rather than admin tasks. Assigning a
+        teacher is not: open a subject&apos;s &quot;Teachers assigned&quot; count to see who
+        covers it, or add someone directly from there.
       </p>
     </div>
   );

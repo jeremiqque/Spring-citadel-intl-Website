@@ -145,12 +145,16 @@ body {
   text-transform: uppercase;
 }
 
-/* Button base: square corners (no radius), 1px border */
+/* Button base: fully-rounded pill, 1px border, consistent spacing.
+   .btn-pill--lg is the one formal "bigger" tier — it replaces the
+   !px-7 !py-4 overrides that used to get typed at each hero/CTA call
+   site, which is how five different buttons ended up at three
+   different sizes despite sharing this one class. */
 .btn-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0;
+  border-radius: 9999px;
   border: 1px solid currentColor;
   padding: 10px 20px;
   font-size: 18px;
@@ -158,6 +162,10 @@ body {
   cursor: pointer;
   transition: background-color 0.25s ease, color 0.25s ease, transform 0.25s ease;
   white-space: nowrap;
+}
+
+.btn-pill--lg {
+  padding: 16px 28px;
 }
 
 .side-pad {

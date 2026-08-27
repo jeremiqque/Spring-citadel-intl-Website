@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
 import {
   Dialog,
@@ -136,17 +137,41 @@ export function TeacherGradeRow({
 
   return (
     <TableRow>
-      <TableCell className="font-mono text-xs">{admissionNo}</TableCell>
-      <TableCell>{studentName}</TableCell>
+      {/* pl-5 / pr-5 on the first and last cells: the sheet now sits inside a
+          card whose header is inset 20px, and a table that starts 12px from
+          the edge under a header that starts at 20px reads as two different
+          left margins stacked. The TableHead cells on the page carry the
+          matching inset. */}
+      <TableCell className="pl-5 font-mono text-xs text-muted-foreground">{admissionNo}</TableCell>
+      <TableCell className="font-medium text-foreground">{studentName}</TableCell>
       <TableCell>{field("assignment", "Assignment")}</TableCell>
       <TableCell>{field("midterm", "Mid-term")}</TableCell>
       <TableCell>{field("exam", "Exam")}</TableCell>
       {/* An em dash, not 0, while the row is incomplete — the total is not
-          "zero", it is "not yet entered". Same for the letter. */}
-      <TableCell className="font-medium">{isIncomplete ? "—" : total}</TableCell>
-      <TableCell>{isIncomplete ? "—" : scoreToLetter(total, gradingConfig)}</TableCell>
-      <TableCell>{isSubmitted ? "Submitted" : initial ? "Draft" : "Not entered"}</TableCell>
-      <TableCell className="text-right">
+          "zero", it is "not yet entered". Same for the letter, which now
+          rides in this same cell rather than owning a column of its own. */}
+      <TableCell className="font-medium">
+        {isIncomplete ? (
+          <span className="text-muted-foreground">—</span>
+        ) : (
+          <>
+            {total}{" "}
+            <span className="ml-0.5 text-xs text-muted-foreground">
+              {scoreToLetter(total, gradingConfig)}
+            </span>
+          </>
+        )}
+      </TableCell>
+      <TableCell>
+        {/* Was plain prose in a column of plain prose. The same three words
+            in the same three colours the rest of the portal already uses for
+            these states, so a teacher scanning the Status column is matching
+            shapes rather than reading forty short sentences. */}
+        <Badge variant={isSubmitted ? "success" : initial ? "warning" : "outline"}>
+          {isSubmitted ? "Submitted" : initial ? "Draft" : "Not entered"}
+        </Badge>
+      </TableCell>
+      <TableCell className="pr-5 text-right">
         <div className="flex justify-end gap-2">
           <Button
             size="sm"

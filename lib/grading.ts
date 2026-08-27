@@ -103,6 +103,23 @@ export function average(scores: number[]): number | null {
 }
 
 /**
+ * Grade -> Tailwind classes for the small coloured chips used to show a
+ * letter grade at a glance (the admin grades overview's subject chips, and a
+ * student's grade history table). Reuses the app's existing green/amber/red
+ * status colours (Badge's success/warning/destructive) instead of a fourth
+ * colour scale of its own — "green means good, amber means borderline, red
+ * means failing" stays one rule across the whole portal, not one rule per
+ * screen that happens to show a grade.
+ */
+export const GRADE_BAND_CLASS: Record<LetterGrade, string> = {
+  A: "bg-green-100 text-green-800",
+  B: "bg-green-100 text-green-800",
+  C: "bg-amber-100 text-amber-800",
+  D: "bg-amber-100 text-amber-800",
+  F: "bg-destructive/10 text-destructive",
+};
+
+/**
  * Validate a candidate config.
  *
  * Bands must be strictly descending. A non-descending set is not a cosmetic

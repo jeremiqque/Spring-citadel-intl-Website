@@ -1,11 +1,17 @@
 import { firstParam } from "@/lib/search-params";
-import Link from "next/link";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { UserGroupIcon, Alert02Icon } from "@hugeicons/core-free-icons";
+
 import { prisma } from "@/lib/prisma";
 import { getGradingConfig } from "@/lib/grading-settings";
 import { FILTER_SELECT_CLASSNAME } from "@/lib/filter-select-class";
 import { requireTeacher, teacherAssignments } from "@/lib/teacher";
 import { parseTerm } from "@/lib/validation/id";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
+import { Surface, SurfaceHeader, EmptyState } from "@/components/ui/surface";
+import { Segmented } from "@/components/ui/segmented";
+import { Stat, StatGroup, ProgressMeter } from "@/components/ui/stat";
 import {
   Table,
   TableHeader,
@@ -35,6 +41,32 @@ type TermValue = "TERM_1" | "TERM_2" | "TERM_3";
  * re-derives the teacher from the session and re-checks the assignment on
  * every write, because a Server Action can be called without this page ever
  * having rendered.
+ *
+ * ── WHAT CHANGED IN THE LAYOUT, AND WHY ────────────────────────────────────
+ * The screen used to stack FOUR unrelated control bands between the title and
+ * the data: a filter form, a row of term tabs, a row of grey counts, and then
+ * the table. Each sat directly on the page background with nothing grouping
+ * it, so the eye had to cross four ambiguous strips to reach the one thing
+ * the page is for. Worse, the term was settable in two different places — a
+ * <select> inside the form AND the tab row beneath it — which are two
+ * controls for one value that can visibly disagree with each other while the
+ * form is unsubmitted.
+ *
+ *   • The controls are now ONE toolbar in a card. The term <select> is gone;
+ *     the segmented control is the single term control, and the form carries
+ *     the current term in a hidden input so switching class still lands on
+ *     the term you were looking at. Every combination remains a plain GET
+ *     URL that works with JavaScript off — that constraint drove the
+ *     original native selects and is fully preserved.
+ *
+ *   • The counts became a meter plus tiles. "12 submitted, 3 drafts,
+ *     25 not entered" is three numbers a teacher has to do arithmetic on to
+ *     answer the only question they have — am I nearly done? The bar answers
+ *     it before they read anything.
+ *
+ *   • The empty class no longer renders a nine-column table containing one
+ *     apologetic row. A table with headers for nine columns of nothing is a
+ *     table pretending to have data; the empty state replaces it outright.
  */
 export default async function TeacherGradesPage({
   searchParams,
@@ -57,12 +89,17 @@ export default async function TeacherGradesPage({
 
   if (assignments.length === 0) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-semibold text-foreground">Grade entry</h1>
-        <p className="text-sm text-muted-foreground">
-          You have no classes assigned yet. An administrator assigns classes and subjects
-          from your staff profile — once they do, they appear here.
-        </p>
+      <div className="space-y-6">
+        <PageHeader title="Grade entry" />
+        <Surface padding="none">
+          <EmptyState
+            icon={<HugeiconsIcon icon={UserGroupIcon} size={18} />}
+            title="No classes assigned yet"
+          >
+            An administrator assigns classes and subjects from your staff profile — once
+            they do, they appear here.
+          </EmptyState>
+        </Surface>
       </div>
     );
   }
@@ -117,6 +154,7 @@ export default async function TeacherGradesPage({
   const draftCount = grades.filter((g) => g.status === "DRAFT").length;
   const submittedCount = grades.filter((g) => g.status === "SUBMITTED").length;
   const notEnteredCount = students.length - grades.length;
+  const termLabel = term.replace("_", " ");
 
   function hrefForTerm(nextTerm: TermValue) {
     const sp = new URLSearchParams();
@@ -127,174 +165,226 @@ export default async function TeacherGradesPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Grade entry</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {active.class.name} — {active.subject.name}
-          {currentSession ? ` · ${currentSession}` : ""} · {term.replace("_", " ")}
-        </p>
-      </div>
+      <PageHeader
+        eyebrow={`${currentSession ? `${currentSession} · ` : ""}${termLabel}`}
+        title="Grade entry"
+        description={`${active.class.name} — ${active.subject.name}`}
+        actions={
+          <Segmented
+            label="Term"
+            items={(["TERM_1", "TERM_2", "TERM_3"] as const).map((t) => ({
+              key: t,
+              href: hrefForTerm(t),
+              label: t.replace("_", " "),
+              current: t === term,
+            }))}
+          />
+        }
+      />
 
-      {/* Plain GET form over native selects, matching the admin filter rows:
-          every combination is a shareable, JS-free URL. The class/subject
-          pair is one control rather than two, because only the pairs this
-          teacher actually holds are valid — two independent selects would
-          let them build a combination that does not exist and then explain
-          an empty table. */}
-      <form className="flex flex-wrap items-end gap-3">
-        <div>
-          <label className="text-xs text-muted-foreground" htmlFor="pair">
-            Class and subject
-          </label>
-          <select
-            id="pair"
-            name="pair"
-            defaultValue={`${active.classId}|${active.subjectId}`}
-            className={FILTER_SELECT_CLASSNAME}
-          >
-            {assignments.map((a) => (
-              <option key={a.id} value={`${a.classId}|${a.subjectId}`}>
-                {a.class.name} — {a.subject.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground" htmlFor="term">
-            Term
-          </label>
-          <select id="term" name="term" defaultValue={term} className={FILTER_SELECT_CLASSNAME}>
-            <option value="TERM_1">Term 1</option>
-            <option value="TERM_2">Term 2</option>
-            <option value="TERM_3">Term 3</option>
-          </select>
-        </div>
-        <Button type="submit" variant="secondary" size="field">
-          Open
-        </Button>
-      </form>
+      {/* Plain GET form over a native select: every class/subject combination
+          stays a shareable, JS-free URL. The pair is ONE control rather than
+          two, because only the pairs this teacher actually holds are valid —
+          two independent selects would let them build a combination that
+          does not exist and then explain an empty table.
 
-      {/* Term switching is one click rather than select-then-Open: a teacher
-          moves between terms far more often than between classes. These look
-          like tabs but are plain links, so the selected one needs a real
-          signal beyond its background colour — aria-current="page" is what
-          conveys it, matching the student results page and the sidebar. */}
-      <div className="flex items-center gap-2">
-        {(["TERM_1", "TERM_2", "TERM_3"] as const).map((t) => (
-          <Link
-            key={t}
-            href={hrefForTerm(t)}
-            aria-current={t === term ? "page" : undefined}
-            className={
-              "rounded-md px-3 py-1.5 text-xs transition-colors " +
-              (t === term
-                ? "bg-secondary text-secondary-foreground"
-                : "text-muted-foreground hover:bg-muted")
-            }
-          >
-            {t.replace("_", " ")}
-          </Link>
-        ))}
-      </div>
+          The term rides along in a hidden input so changing class keeps the
+          term you were on. That is what lets the segmented control above be
+          the only term control instead of the second of two. */}
+      <Surface padding="sm">
+        <form className="flex flex-wrap items-end gap-3">
+          <input type="hidden" name="term" value={term} />
+          <div className="min-w-0 flex-1 sm:max-w-xs">
+            <label
+              className="text-2xs font-medium tracking-[0.08em] text-muted-foreground uppercase"
+              htmlFor="pair"
+            >
+              Class and subject
+            </label>
+            <select
+              id="pair"
+              name="pair"
+              defaultValue={`${active.classId}|${active.subjectId}`}
+              className={`${FILTER_SELECT_CLASSNAME} w-full`}
+            >
+              {assignments.map((a) => (
+                <option key={a.id} value={`${a.classId}|${a.subjectId}`}>
+                  {a.class.name} — {a.subject.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button type="submit" variant="secondary" size="field">
+            Open
+          </Button>
+        </form>
+      </Surface>
 
       {currentSession === "" ? (
-        <div
+        <Surface
           role="alert"
-          className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-foreground"
+          padding="sm"
+          className="border-destructive/30 bg-destructive/5 shadow-none"
         >
-          <p className="font-medium">No academic session is set.</p>
-          <p className="mt-1 text-muted-foreground">
-            Grade entry is disabled until an administrator sets the current session, because
-            every result is filed against one. Nothing you type below would be saved, so the
-            sheet is read-only.
-          </p>
-        </div>
+          <div className="flex gap-3">
+            <HugeiconsIcon
+              icon={Alert02Icon}
+              size={18}
+              className="mt-0.5 shrink-0 text-destructive"
+              aria-hidden
+            />
+            <div className="text-sm">
+              <p className="font-medium text-foreground">No academic session is set.</p>
+              <p className="mt-1 leading-body text-muted-foreground">
+                Grade entry is disabled until an administrator sets the current session,
+                because every result is filed against one. Nothing you type below would be
+                saved, so the sheet is read-only.
+              </p>
+            </div>
+          </div>
+        </Surface>
       ) : (
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
-          <span>{students.length} students</span>
-          <span>{submittedCount} submitted</span>
-          <span>{draftCount} draft{draftCount === 1 ? "" : "s"}</span>
-          <span>{notEnteredCount} not entered</span>
-        </div>
+        students.length > 0 && (
+          <Surface padding="none" className="overflow-hidden">
+            <div className="px-5 pt-4">
+              {/* Part-to-whole, in the order the work moves through:
+                  submitted → draft → not entered. Every segment is restated
+                  as a labelled tile below, so the colours are never the only
+                  thing carrying the meaning. */}
+              <ProgressMeter
+                label={`Marking progress for ${active.class.name}, ${active.subject.name}, ${termLabel}`}
+                total={students.length}
+                segments={[
+                  { value: submittedCount, tone: "success", label: "submitted" },
+                  { value: draftCount, tone: "warning", label: "draft" },
+                  { value: notEnteredCount, tone: "neutral", label: "not entered" },
+                ]}
+              />
+            </div>
+            <StatGroup className="mt-4 rounded-none border-0 border-t border-border">
+              <Stat label="Students" value={students.length} />
+              <Stat label="Submitted" value={submittedCount} tone="success" />
+              <Stat label="Drafts" value={draftCount} tone="warning" />
+              <Stat
+                label="Not entered"
+                value={notEnteredCount}
+                tone={notEnteredCount > 0 ? "neutral" : "success"}
+              />
+            </StatGroup>
+          </Surface>
+        )
       )}
 
-      <div className="rounded-lg border border-border">
-        <Table caption={`Grade entry for ${active.class.name}, ${active.subject.name}, ${term.replace("_", " ")}`}>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Admission No.</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Assignment (0-20)</TableHead>
-              <TableHead>Midterm (0-30)</TableHead>
-              <TableHead>Exam (0-50)</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Grade</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {students.length === 0 && (
+      <Surface padding="none">
+        <SurfaceHeader
+          actions={
+            currentSession !== "" && students.length > 0 ? (
+              <SubmitAllDrafts
+                classId={active.classId}
+                subjectId={active.subjectId}
+                term={term}
+                session={currentSession}
+                draftCount={draftCount}
+                className={active.class.name}
+                subjectName={active.subject.name}
+              />
+            ) : undefined
+          }
+        >
+          <div className="min-w-0">
+            <h2 className="text-lg leading-heading font-semibold text-foreground">
+              Student marks
+            </h2>
+            {/* The component weightings were only discoverable by reading
+                three column headers. Stating them once, up here, is what
+                lets those headers shorten later without losing the rule. */}
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Assignment 20 · Midterm 30 · Exam 50 — the total and letter update as you
+              type.
+            </p>
+          </div>
+        </SurfaceHeader>
+
+        {students.length === 0 ? (
+          <EmptyState
+            icon={<HugeiconsIcon icon={UserGroupIcon} size={18} />}
+            title={`No students are enrolled in ${active.class.name} yet`}
+          >
+            There is nothing to mark until an administrator enrols students into this class.
+          </EmptyState>
+        ) : (
+          <Table
+            caption={`Grade entry for ${active.class.name}, ${active.subject.name}, ${termLabel}`}
+          >
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
-                  No students are enrolled in {active.class.name} yet.
-                </TableCell>
+                <TableHead className="pl-5">Admission No.</TableHead>
+                <TableHead>Name</TableHead>
+                {/* The "(0-20)" suffixes are gone from these three headers:
+                    the weightings are stated once in the card header above,
+                    and each input still carries the full bound in its
+                    aria-label and its `max`. Nine columns plus two buttons a
+                    row did not fit the content width — the Actions column,
+                    the only interactive part of the row, was the part that
+                    scrolled off. Roughly 90px reclaimed here is what brings
+                    it back on screen. */}
+                <TableHead>Assignment</TableHead>
+                <TableHead>Midterm</TableHead>
+                <TableHead>Exam</TableHead>
+                {/* Total and Grade were two columns carrying one fact —
+                    "81" and "A" are the same result twice, and a letter
+                    without its score is not independently useful here. One
+                    column, score with the letter beside it, is a column of
+                    width back for the Actions the teacher actually clicks. */}
+                <TableHead>Total</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="pr-5 text-right">Actions</TableHead>
               </TableRow>
-            )}
-            {students.map((s) => {
-              const existing = gradeByStudent.get(s.id);
-              return (
-                <TeacherGradeRow
-                  // The key includes the subject and term, not just the
-                  // student. Switching term is a soft navigation that
-                  // re-renders this tree in place, so React PRESERVES each
-                  // row's useState while its `initial`/`term` props change
-                  // underneath it: a teacher who typed 15/25/40 for Term 1
-                  // and clicked the Term 2 tab before saving kept those
-                  // numbers on screen, and one click of Save filed Term 1's
-                  // marks as a Term 2 result. Same bug when only the subject
-                  // changed, since the roster (and therefore the student ids)
-                  // is identical. Changing the key remounts the row, which is
-                  // what resets the typed state. `session` is in here for the
-                  // same reason, for the rarer case of an admin rolling the
-                  // academic session while a sheet is open.
-                  key={`${s.id}:${active.subjectId}:${term}:${currentSession}`}
-                  studentId={s.id}
-                  studentName={s.user.name}
-                  admissionNo={s.admissionNo}
-                  classId={active.classId}
-                  subjectId={active.subjectId}
-                  term={term}
-                  session={currentSession}
-                  gradingConfig={gradingConfig}
-                  initial={
-                    existing
-                      ? {
-                          assignment: existing.assignment,
-                          midterm: existing.midterm,
-                          exam: existing.exam,
-                          status: existing.status,
-                        }
-                      : null
-                  }
-                />
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
-
-      {currentSession !== "" && students.length > 0 && (
-        <SubmitAllDrafts
-          classId={active.classId}
-          subjectId={active.subjectId}
-          term={term}
-          session={currentSession}
-          draftCount={draftCount}
-          className={active.class.name}
-          subjectName={active.subject.name}
-        />
-      )}
+            </TableHeader>
+            <TableBody>
+              {students.map((s) => {
+                const existing = gradeByStudent.get(s.id);
+                return (
+                  <TeacherGradeRow
+                    // The key includes the subject and term, not just the
+                    // student. Switching term is a soft navigation that
+                    // re-renders this tree in place, so React PRESERVES each
+                    // row's useState while its `initial`/`term` props change
+                    // underneath it: a teacher who typed 15/25/40 for Term 1
+                    // and clicked the Term 2 tab before saving kept those
+                    // numbers on screen, and one click of Save filed Term 1's
+                    // marks as a Term 2 result. Same bug when only the subject
+                    // changed, since the roster (and therefore the student ids)
+                    // is identical. Changing the key remounts the row, which is
+                    // what resets the typed state. `session` is in here for the
+                    // same reason, for the rarer case of an admin rolling the
+                    // academic session while a sheet is open.
+                    key={`${s.id}:${active.subjectId}:${term}:${currentSession}`}
+                    studentId={s.id}
+                    studentName={s.user.name}
+                    admissionNo={s.admissionNo}
+                    classId={active.classId}
+                    subjectId={active.subjectId}
+                    term={term}
+                    session={currentSession}
+                    gradingConfig={gradingConfig}
+                    initial={
+                      existing
+                        ? {
+                            assignment: existing.assignment,
+                            midterm: existing.midterm,
+                            exam: existing.exam,
+                            status: existing.status,
+                          }
+                        : null
+                    }
+                  />
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </Surface>
     </div>
   );
 }

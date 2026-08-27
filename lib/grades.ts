@@ -1,7 +1,6 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { scoreToLetter, type GradingConfig } from "@/lib/grading";
 import { getGradingConfig } from "@/lib/grading-settings";
-import { prisma } from "@/lib/prisma";
 import { createNotification, notifyAdmins } from "@/lib/notify";
 
 type Db = PrismaClient | Prisma.TransactionClient;

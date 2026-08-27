@@ -202,6 +202,17 @@ model Student {
   guardianPhone String
   address       String
 
+  // The ONE field on this row a student may write themselves — a number the
+  // school can reach THEM on, distinct from guardianPhone.
+  //
+  // Everything else here is a record of record: admissionNo, class, dob,
+  // gender and the guardian's details are set by the office and corrected by
+  // the office. That is a deliberate policy, not an oversight — see the note
+  // at the top of app/portal/(app)/profile/page.tsx. Nullable because every
+  // student who already exists has never been asked for one, and because a
+  // student is never required to supply a personal number.
+  contactPhone String?
+
   // AT_RISK is derived, never hand-set: recomputed from submitted grades on
   // every grade write. INACTIVE is the soft delete.
   status StudentStatus @default(ACTIVE)

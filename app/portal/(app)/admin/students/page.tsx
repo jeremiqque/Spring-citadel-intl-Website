@@ -4,6 +4,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Download01Icon, PrinterIcon } from "@hugeicons/core-free-icons";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_USER } from "@/lib/user-select";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
 import { Input } from "@/components/ui/input";
@@ -72,7 +73,7 @@ export default async function StudentsPage({
   const [students, total, classes] = await Promise.all([
     prisma.student.findMany({
       where,
-      include: { user: true, class: true },
+      include: { user: PUBLIC_USER, class: true },
       orderBy: { user: { name: "asc" } },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,

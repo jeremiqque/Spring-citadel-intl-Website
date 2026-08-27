@@ -31,6 +31,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { signOutAction } from "./actions";
 
@@ -40,16 +41,24 @@ type IconType = typeof DashboardSquare02Icon;
 type NavItem = { label: string; href: string; icon: IconType };
 type NavSection = { section: string; items: NavItem[] };
 
+// One self-service account page for every role. Named once so the sidebar
+// and the account menu below cannot drift onto different paths — which is
+// exactly what happened with the old /portal/student/profile, reachable from
+// two places and now a redirect into this route.
+const PROFILE_HREF = "/portal/profile";
+
 // Account-menu items, per role — the first group in the avatar dropdown,
-// above Notifications and Sign out. Deliberately only routes that exist:
-// ADMIN and TEACHER have no personal pages yet, so their menu opens straight
-// at Notifications rather than carrying rows that 404. Add here when the
-// pages land, not before.
+// above Notifications and Sign out. Still the rule that every href must
+// resolve to a real page; what changed is that ADMIN and TEACHER now HAVE a
+// personal page, so their menus are no longer empty. /portal/profile is one
+// route for all three roles (see app/portal/(app)/profile/page.tsx for why
+// it is not three), which is also why this row is identical in each list
+// rather than role-specific.
 const ACCOUNT_ITEMS: Record<Role, NavItem[]> = {
-  ADMIN: [],
-  TEACHER: [],
+  ADMIN: [{ label: "My profile", href: PROFILE_HREF, icon: UserCircleIcon }],
+  TEACHER: [{ label: "My profile", href: PROFILE_HREF, icon: UserCircleIcon }],
   STUDENT: [
-    { label: "My profile", href: "/portal/student/profile", icon: UserCircleIcon },
+    { label: "My profile", href: PROFILE_HREF, icon: UserCircleIcon },
     { label: "My results", href: "/portal/student/grades", icon: BarChartIcon },
   ],
 };
@@ -89,6 +98,15 @@ const NAV: Record<Role, NavSection[]> = {
         { label: "Settings", href: "/portal/admin/settings", icon: Settings02Icon },
       ],
     },
+    // ACCOUNT is its own section rather than another row under SYSTEM,
+    // in all three roles. SYSTEM is about the school — notifications, the
+    // roster of admins, the school's settings. This one row is about the
+    // person signed in, and grouping "my password" beside "the school's
+    // grading configuration" is how an admin ends up editing the wrong one.
+    {
+      section: "ACCOUNT",
+      items: [{ label: "My Profile", href: PROFILE_HREF, icon: UserCircleIcon }],
+    },
   ],
   TEACHER: [
     {
@@ -106,14 +124,19 @@ const NAV: Record<Role, NavSection[]> = {
       section: "SYSTEM",
       items: [{ label: "Notifications", href: "/portal/notifications", icon: BellIcon }],
     },
+    {
+      section: "ACCOUNT",
+      items: [{ label: "My Profile", href: PROFILE_HREF, icon: UserCircleIcon }],
+    },
   ],
   STUDENT: [
     {
       section: "MAIN",
-      items: [
-        { label: "Dashboard", href: "/portal/student", icon: DashboardSquare02Icon },
-        { label: "Profile", href: "/portal/student/profile", icon: UserCircleIcon },
-      ],
+      // Profile used to sit here, directly under Dashboard, which put a
+      // personal-account row inside the section that is otherwise "the
+      // school's stuff" — and made STUDENT the only role whose profile was
+      // in a different place. It now lives in ACCOUNT with the other two.
+      items: [{ label: "Dashboard", href: "/portal/student", icon: DashboardSquare02Icon }],
     },
     {
       section: "ACADEMIC",
@@ -122,6 +145,10 @@ const NAV: Record<Role, NavSection[]> = {
     {
       section: "SYSTEM",
       items: [{ label: "Notifications", href: "/portal/notifications", icon: BellIcon }],
+    },
+    {
+      section: "ACCOUNT",
+      items: [{ label: "My Profile", href: PROFILE_HREF, icon: UserCircleIcon }],
     },
   ],
 };
@@ -199,12 +226,15 @@ export function PortalShell({
   role,
   name,
   email,
+  avatarSrc,
   unreadCount,
   children,
 }: {
   role: Role;
   name: string;
   email: string;
+  /** From avatarUrl() — null when the user has no photo, which is the norm. */
+  avatarSrc: string | null;
   unreadCount: number;
   children: React.ReactNode;
 }) {
@@ -404,8 +434,13 @@ export function PortalShell({
                       other "not wired up yet" control (see Ask AI above):
                       this is decorative until real presence exists, not a
                       claim about it. */}
-                  <span className="relative flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-foreground">
-                    {(name || "?").trim().charAt(0).toUpperCase()}
+                  <span className="relative flex shrink-0">
+                    {/* The initial-letter fallback moved into Avatar, which
+                        every other face in the portal now also uses — the
+                        letter here and the letter on a profile page were two
+                        separate implementations of the same idea, and only
+                        one of them would ever have learned about photos. */}
+                    <Avatar src={avatarSrc} name={name} size="xs" />
                     <span
                       aria-hidden="true"
                       className="absolute -right-0.5 -bottom-0.5 size-2 rounded-full bg-green-500 ring-2 ring-background"

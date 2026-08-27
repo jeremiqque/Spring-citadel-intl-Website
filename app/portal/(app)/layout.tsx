@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { avatarUrl } from "@/lib/avatar";
 import { PortalShell } from "./portal-shell";
 
 // A route group, not literally app/portal/layout.tsx: the shell (sidebar +
@@ -42,15 +43,27 @@ export default async function PortalAppLayout({
   // It fails OPEN on a database error, deliberately: the notification count
   // below already degrades rather than blacking out the portal, and a Neon
   // blip should not sign the whole school out.
+  // Declared outside the try so the avatar survives a database blip: the
+  // revocation check fails open, and the shell must still render.
+  let avatarUpdatedAt: Date | null = null;
+
   try {
     const current = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
         tokenVersion: true,
+        // Piggy-backing on the lookup this layout already performs on every
+        // authenticated request, rather than adding a second round trip just
+        // to draw the header avatar. The BYTES are not selected here — only
+        // the timestamp that builds the URL the browser then fetches once
+        // and caches for a year. See lib/avatar.ts.
+        avatarUpdatedAt: true,
         student: { select: { status: true } },
         teacher: { select: { status: true } },
       },
     });
+
+    avatarUpdatedAt = current?.avatarUpdatedAt ?? null;
 
     const revoked =
       !current ||
@@ -98,6 +111,7 @@ export default async function PortalAppLayout({
       role={session.user.role}
       name={session.user.name ?? ""}
       email={session.user.email ?? ""}
+      avatarSrc={avatarUrl(session.user.id, avatarUpdatedAt)}
       unreadCount={unreadCount}
     >
       {children}

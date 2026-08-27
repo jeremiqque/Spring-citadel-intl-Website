@@ -12,10 +12,13 @@ import {
   BookOpen01Icon,
 } from "@hugeicons/core-free-icons";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_USER } from "@/lib/user-select";
+import { avatarUrl } from "@/lib/avatar";
+import { Avatar } from "@/components/ui/avatar";
+import { RemovePhotoButton } from "../../remove-photo-button";
 import { BackLink } from "@/components/ui/back-link";
 import { submissionStatusFromCounts } from "@/lib/grades";
 import { Badge } from "@/components/ui/badge";
-import { initials } from "@/lib/utils";
 import { InfoCard, InfoRow } from "@/components/ui/info-card";
 import {
   Table,
@@ -51,7 +54,7 @@ export default async function TeacherProfilePage({
   const teacher = await prisma.teacher.findUnique({
     where: { id },
     include: {
-      user: true,
+      user: PUBLIC_USER,
       primarySubject: true,
       assignments: {
         include: { class: true, subject: true },
@@ -153,7 +156,7 @@ export default async function TeacherProfilePage({
     ? await Promise.all([
         prisma.student.findMany({
           where: { classId: { in: classIds }, status: "AT_RISK" },
-          include: { user: true, class: true },
+          include: { user: PUBLIC_USER, class: true },
           orderBy: { user: { name: "asc" } },
           take: 20,
         }),
@@ -178,9 +181,12 @@ export default async function TeacherProfilePage({
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-brand/10 text-lg font-semibold text-brand">
-            {initials(teacher.user.name)}
-          </span>
+          <Avatar
+            src={avatarUrl(teacher.user.id, teacher.user.avatarUpdatedAt)}
+            name={teacher.user.name}
+            size="lg"
+            className="text-lg"
+          />
           <div>
             <h1 className="text-2xl font-semibold text-foreground">{teacher.user.name}</h1>
             <p className="text-sm text-muted-foreground">
@@ -189,7 +195,12 @@ export default async function TeacherProfilePage({
             </p>
           </div>
         </div>
-        <Badge variant={statusBadgeVariant(teacher.status)}>{teacher.status.replace("_", " ")}</Badge>
+        <div className="flex flex-wrap items-center gap-3">
+          <Badge variant={statusBadgeVariant(teacher.status)}>{teacher.status.replace("_", " ")}</Badge>
+          {teacher.user.avatarUpdatedAt && (
+            <RemovePhotoButton userId={teacher.user.id} personName={teacher.user.name} />
+          )}
+        </div>
       </div>
 
       <TeacherActions teacherId={teacher.id} status={teacher.status} />

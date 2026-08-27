@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_USER } from "@/lib/user-select";
 import { StudentForm } from "../../student-form";
 import { BackLink } from "@/components/ui/back-link";
 
@@ -11,7 +12,7 @@ export default async function EditStudentPage({
   const { id } = await params;
 
   const [student, classes] = await Promise.all([
-    prisma.student.findUnique({ where: { id }, include: { user: true } }),
+    prisma.student.findUnique({ where: { id }, include: { user: PUBLIC_USER } }),
     prisma.class.findMany({
       orderBy: [{ level: "asc" }, { name: "asc" }],
       select: { id: true, name: true, code: true },

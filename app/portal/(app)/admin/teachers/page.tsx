@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_USER } from "@/lib/user-select";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
 import { Input } from "@/components/ui/input";
@@ -58,7 +59,7 @@ export default async function TeachersPage({
   const [teachers, total, subjects] = await Promise.all([
     prisma.teacher.findMany({
       where,
-      include: { user: true, primarySubject: true, _count: { select: { assignments: true } } },
+      include: { user: PUBLIC_USER, primarySubject: true, _count: { select: { assignments: true } } },
       orderBy: { user: { name: "asc" } },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,

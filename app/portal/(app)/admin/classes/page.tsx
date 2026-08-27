@@ -3,6 +3,7 @@ import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Book01Icon, UserGroupIcon, Alert01Icon, Award01Icon } from "@hugeicons/core-free-icons";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_USER } from "@/lib/user-select";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -70,12 +71,12 @@ export default async function AdminClassesPage() {
       // just ids, now: ClassCoverage's dialog lists who's assigned, not
       // just how many.
       where: { teacher: { status: { in: ["ACTIVE", "ON_LEAVE"] } } },
-      include: { teacher: { include: { user: true } }, subject: true },
+      include: { teacher: { include: { user: PUBLIC_USER } }, subject: true },
     }),
     prisma.subject.findMany({ orderBy: { name: "asc" } }),
     prisma.teacher.findMany({
       where: { status: { in: ["ACTIVE", "ON_LEAVE"] } },
-      include: { user: true },
+      include: { user: PUBLIC_USER },
       orderBy: { user: { name: "asc" } },
     }),
   ]);

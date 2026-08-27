@@ -1,5 +1,6 @@
 import { firstParam } from "@/lib/search-params";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_USER } from "@/lib/user-select";
 import { Badge } from "@/components/ui/badge";
 import { FILTER_SELECT_CLASSNAME } from "@/lib/filter-select-class";
 import { Button } from "@/components/ui/button";
@@ -71,12 +72,12 @@ export default async function AdminSubjectsPage({
     // gaps wants the subjects with nobody at all.
     prisma.teacherAssignment.findMany({
       where: { teacher: { status: { in: ["ACTIVE", "ON_LEAVE"] } } },
-      include: { teacher: { include: { user: true } }, class: true },
+      include: { teacher: { include: { user: PUBLIC_USER } }, class: true },
     }),
     prisma.class.findMany({ orderBy: [{ level: "asc" }, { name: "asc" }] }),
     prisma.teacher.findMany({
       where: { status: { in: ["ACTIVE", "ON_LEAVE"] } },
-      include: { user: true },
+      include: { user: PUBLIC_USER },
       orderBy: { user: { name: "asc" } },
     }),
   ]);

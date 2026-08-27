@@ -4,6 +4,7 @@ import { LockKeyIcon, UserCircleIcon, IdentityCardIcon } from "@hugeicons/core-f
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { avatarUrl } from "@/lib/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { Surface, SurfaceHeader } from "@/components/ui/surface";
@@ -11,6 +12,7 @@ import { ReadOnlyField } from "./field";
 import { StaffProfileForm } from "./staff-profile-form";
 import { StudentProfileForm } from "./student-profile-form";
 import { PasswordForm } from "./password-form";
+import { AvatarUploader } from "./avatar-uploader";
 import { StudentRecordMissing } from "../student/student-record-missing";
 
 /**
@@ -60,10 +62,6 @@ const ROLE_LABEL = {
   STUDENT: "Student",
 } as const;
 
-function initial(name: string) {
-  return (name || "?").trim().charAt(0).toUpperCase();
-}
-
 function titleCase(v: string) {
   return v.charAt(0) + v.slice(1).toLowerCase();
 }
@@ -81,6 +79,10 @@ export default async function ProfilePage() {
       email: true,
       role: true,
       createdAt: true,
+      // Just the timestamp — never the bytes. The photo itself is fetched by
+      // the browser from /api/portal/avatar/<id>, so this page's query stays
+      // the size of a row of text.
+      avatarUpdatedAt: true,
       teacher: {
         select: {
           staffId: true,
@@ -139,28 +141,34 @@ export default async function ProfilePage() {
           establish is whose record this is and in what capacity. Everything
           here is duplicated in a labelled row further down; this is the
           glance version. */}
-      <Surface className="flex flex-wrap items-center gap-x-5 gap-y-4">
-        <span
-          aria-hidden
-          className="flex size-14 shrink-0 items-center justify-center rounded-full bg-brand-tint text-xl font-semibold text-brand"
-        >
-          {initial(user.name)}
-        </span>
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate text-lg leading-heading font-semibold text-foreground">
-            {user.name}
-          </h2>
-          <p className="mt-0.5 truncate text-sm text-muted-foreground">
-            {user.email}
-            {subtitle !== user.email && (
-              <>
-                {" · "}
-                <span className="font-mono text-xs">{subtitle}</span>
-              </>
-            )}
-          </p>
+      <Surface className="space-y-5">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-lg leading-heading font-semibold text-foreground">
+              {user.name}
+            </h2>
+            <p className="mt-0.5 truncate text-sm text-muted-foreground">
+              {user.email}
+              {subtitle !== user.email && (
+                <>
+                  {" · "}
+                  <span className="font-mono text-xs">{subtitle}</span>
+                </>
+              )}
+            </p>
+          </div>
+          <Badge variant="secondary">{ROLE_LABEL[user.role]}</Badge>
         </div>
-        <Badge variant="secondary">{ROLE_LABEL[user.role]}</Badge>
+
+        {/* The picture is an EDITABLE control, so it sits with the identity
+            block rather than down in "Your details" — the thing you are
+            changing and the thing it represents are the same object, and
+            splitting them would mean editing your face in one card while
+            watching it update in another. */}
+        <AvatarUploader
+          initialSrc={avatarUrl(user.id, user.avatarUpdatedAt)}
+          name={user.name}
+        />
       </Surface>
 
       {/* Editable first, read-only second — in the DOM as well as on screen,

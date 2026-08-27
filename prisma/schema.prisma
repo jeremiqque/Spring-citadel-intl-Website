@@ -95,6 +95,12 @@ enum NotificationType {
   GRADES_SUBMITTED
   STUDENT_AT_RISK
   GRADES_PUBLISHED
+  // Raised when an administrator removes someone's profile photo. The person
+  // whose photo it was is told, always. Silent removal would be the wrong
+  // behaviour on a portal used by children: they would keep seeing their
+  // initial, assume the upload had failed, and try again — and nobody would
+  // ever learn that a member of staff had made a decision about it.
+  PROFILE_PHOTO_REMOVED
 }
 
 // ─── Identity ───────────────────────────────────────────────────────────────
@@ -121,6 +127,33 @@ model User {
   // change and every deactivation increments this; auth.config.ts compares
   // the token's copy against the row on each request.
   tokenVersion Int @default(0)
+
+  // ─── Profile picture ──────────────────────────────────────────────────
+  // Stored IN POSTGRES rather than in object storage, deliberately.
+  //
+  // The images are downscaled to a 256px square JPEG in the browser before
+  // they are ever sent (see app/portal/(app)/profile/avatar-uploader.tsx),
+  // which puts each one at roughly 30-60KB. A thousand accounts is therefore
+  // tens of megabytes — a rounding error against the grade tables, and no
+  // new service, credential, CSP origin or failure mode to operate. Object
+  // storage is the right answer at a scale this school does not have; the
+  // migration to it is a background copy plus a URL column, and nothing
+  // outside lib/avatar.ts and the /avatar route would need to change.
+  //
+  // The bytes are @db.ByteA and are NEVER selected by the ordinary user
+  // queries — only app/portal/(app)/avatar/[userId]/route.ts reads this
+  // column. Selecting it accidentally on a list page would drag every
+  // student's photo through a query that wanted their name.
+  avatar     Bytes?
+  // The MIME type the bytes were saved as, so the serving route never has to
+  // sniff them and never has to guess. Always "image/jpeg" today; stored
+  // rather than assumed so a future format does not need a data migration.
+  avatarType String?
+  // Cache-busting key for the serving route. Without it, a browser that has
+  // cached /avatar/<id> keeps showing the OLD photo after a change — the
+  // single most common bug in avatar features — and the only fix available
+  // to the user is a hard refresh they will never think to do.
+  avatarUpdatedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

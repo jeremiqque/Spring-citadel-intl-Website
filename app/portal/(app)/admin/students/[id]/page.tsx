@@ -13,6 +13,7 @@ import {
   Location01Icon,
 } from "@hugeicons/core-free-icons";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_USER } from "@/lib/user-select";
 import { BackLink } from "@/components/ui/back-link";
 import { Badge } from "@/components/ui/badge";
 import { InfoCard, InfoRow } from "@/components/ui/info-card";
@@ -28,7 +29,9 @@ import {
 } from "@/components/ui/table";
 import { average, scoreToLetter, GRADE_BAND_CLASS } from "@/lib/grading";
 import { getGradingConfig } from "@/lib/grading-settings";
-import { initials } from "@/lib/utils";
+import { avatarUrl } from "@/lib/avatar";
+import { Avatar } from "@/components/ui/avatar";
+import { RemovePhotoButton } from "../../remove-photo-button";
 
 // A student accumulates a grade row per subject per term forever — the
 // history table used to load every one of them via a single unbounded
@@ -69,7 +72,7 @@ export default async function StudentProfilePage({
 
   const student = await prisma.student.findUnique({
     where: { id },
-    include: { user: true, class: true },
+    include: { user: PUBLIC_USER, class: true },
   });
 
   if (!student) notFound();
@@ -137,9 +140,15 @@ export default async function StudentProfilePage({
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-brand/10 text-lg font-semibold text-brand">
-            {initials(student.user.name)}
-          </span>
+          {/* Falls back to the two-letter initials this page already used
+              when there is no photo, so an account without one looks exactly
+              as it did before the feature existed. */}
+          <Avatar
+            src={avatarUrl(student.user.id, student.user.avatarUpdatedAt)}
+            name={student.user.name}
+            size="lg"
+            className="text-lg"
+          />
           <div>
             <h1 className="text-2xl font-semibold text-foreground">{student.user.name}</h1>
             <p className="text-sm text-muted-foreground">
@@ -149,6 +158,12 @@ export default async function StudentProfilePage({
         </div>
         <div className="flex items-center gap-3">
           <Badge variant={statusBadgeVariant(student.status)}>{student.status.replace("_", " ")}</Badge>
+          {/* Only rendered when there is actually a photo to remove — a
+              permanently visible control for a thing that does not exist
+              reads as broken, and invites a click that can only no-op. */}
+          {student.user.avatarUpdatedAt && (
+            <RemovePhotoButton userId={student.user.id} personName={student.user.name} />
+          )}
           <Button asChild variant="outline">
             <Link href={`/portal/admin/students/${student.id}/edit`}>Edit</Link>
           </Button>

@@ -12,6 +12,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_USER } from "@/lib/user-select";
 import { average, scoreToLetter } from "@/lib/grading";
 import { getGradingConfig } from "@/lib/grading-settings";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
@@ -94,7 +95,7 @@ export default async function AdminDashboardPage() {
       : Promise.resolve([]),
     prisma.student.findMany({
       where: { status: { in: ["ACTIVE", "AT_RISK"] } },
-      include: { user: true, class: true },
+      include: { user: PUBLIC_USER, class: true },
       orderBy: { createdAt: "desc" },
       take: 10,
     }),

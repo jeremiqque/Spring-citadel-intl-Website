@@ -21,7 +21,7 @@ import { signInAction } from "./actions";
 import { LoginArt } from "./login-art";
 
 // One field, three possible shapes (see auth.ts's identifyCredential):
-//   "n.okafor@example.test"     -> email        (admin, or staff who has one)
+//   "n.okafor@example.test"     -> email        (admin accounts only, see auth.ts)
 //   "SCIS/2026/001"             -> Staff ID      (admin / teacher)
 //   "SCIS/2026/JSS3/001"        -> Admission No. (student)
 // Client-side validation only checks "something was typed" — the real shape

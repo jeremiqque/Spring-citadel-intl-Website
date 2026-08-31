@@ -22,9 +22,13 @@ const credentialsSchema = z.object({
 // One login field serves three different credential shapes, because the
 // school doesn't have — and isn't going to invent — email addresses for
 // young students:
-//   ADMIN / TEACHER  ->  Staff ID   "SCIS/2026/001"       (3 segments)
-//                        or email, if they have one they actually use
-//   STUDENT          ->  Admission No. "SCIS/2026/JSS3/001"  (4 segments)
+//   ADMIN    ->  Email (their primary credential, see admin/admins/actions.ts)
+//                or Staff ID "SCIS/2026/001" (3 segments)
+//   TEACHER  ->  Staff ID   "SCIS/2026/001"       (3 segments) — NOT email,
+//                even though every teacher account also has one (an internal
+//                @staff.springcitadel.internal address); see the email
+//                branch below for why that's deliberately rejected.
+//   STUDENT  ->  Admission No. "SCIS/2026/JSS3/001"  (4 segments)
 // See lib/ids.ts for where these are minted; the segment counts must stay
 // in sync with the formats generated there.
 type Credential =
@@ -110,22 +114,30 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
         } | null = null;
 
         if (credential.kind === "email") {
-          // The status gate has to apply here too. Every teacher and student
-          // account is created with a DERIVABLE internal address —
-          // `${staffId}@staff.springcitadel.internal` — so an ON_LEAVE
-          // teacher or a withdrawn student could simply type that instead of
-          // their ID and walk straight past the check the two branches below
-          // perform. The login form advertises email as an accepted format,
-          // so this was not obscure.
+          // Email sign-in is an ADMIN-only path, by design decision, not by
+          // accident of who happens to have a real email on file. Every
+          // teacher and student account also HAS an email — a derivable
+          // internal address, `${staffId}@staff.springcitadel.internal` —
+          // and before this check, typing that address walked straight past
+          // the ACTIVE/status gate the staffId and admissionNo branches below
+          // perform, which is exactly backwards: the ID-shaped login is the
+          // one every teacher and student is actually issued and expected to
+          // use, and email was never meant to be an alternate route for them.
+          //
+          // The role check happens BEFORE the status/active check, and a
+          // non-admin match is treated identically to no match at all
+          // (`user` stays null, same generic "Invalid login ID or password"
+          // the login page shows for any other wrong credential) — this
+          // never reveals to the caller that the address they typed belongs
+          // to a real, non-admin account.
+          // No longer selecting teacher/student relations here — the role
+          // check below means a matched row is never anything but a plain
+          // ADMIN user, so there is nothing on those relations to read.
           const candidate = await prisma.user.findUnique({
             where: { email: credential.value },
-            include: { teacher: true, student: true },
           });
-          if (candidate) {
-            const blocked =
-              (candidate.teacher && candidate.teacher.status !== "ACTIVE") ||
-              (candidate.student && candidate.student.status === "INACTIVE");
-            if (!blocked) user = candidate;
+          if (candidate && candidate.role === "ADMIN") {
+            user = candidate;
           }
         } else if (credential.kind === "staffId") {
           const teacher = await prisma.teacher.findUnique({

@@ -14,7 +14,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { FILTER_SELECT_CLASSNAME } from "@/lib/filter-select-class";
+import { FilterSelect, FILTER_ALL_VALUE } from "@/components/ui/filter-select";
 import { TeacherRowActions } from "./teacher-row-actions";
 
 const PAGE_SIZE = 25;
@@ -32,8 +32,10 @@ export default async function TeachersPage({
 }) {
   const params = await searchParams;
   const q = params.q?.trim() ?? "";
-  const subjectId = params.subject ?? "";
-  const statusParam = params.status ?? "";
+  const subjectIdRaw = params.subject ?? "";
+  const subjectId = subjectIdRaw === FILTER_ALL_VALUE ? "" : subjectIdRaw;
+  const statusParamRaw = params.status ?? "";
+  const statusParam = statusParamRaw === FILTER_ALL_VALUE ? "" : statusParamRaw;
   const page = Math.max(1, Number(params.page) || 1);
 
   const where: Prisma.TeacherWhereInput = {};
@@ -100,25 +102,31 @@ export default async function TeachersPage({
           <label className="text-xs text-muted-foreground" htmlFor="subject">
             Subject
           </label>
-          <select id="subject" name="subject" defaultValue={subjectId} className={FILTER_SELECT_CLASSNAME}>
-            <option value="">All subjects</option>
-            {subjects.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+          <FilterSelect
+            id="subject"
+            name="subject"
+            defaultValue={subjectId || FILTER_ALL_VALUE}
+            options={[
+              { value: FILTER_ALL_VALUE, label: "All subjects" },
+              ...subjects.map((s) => ({ value: s.id, label: s.name })),
+            ]}
+          />
         </div>
         <div>
           <label className="text-xs text-muted-foreground" htmlFor="status">
             Status
           </label>
-          <select id="status" name="status" defaultValue={statusParam} className={FILTER_SELECT_CLASSNAME}>
-            <option value="">Active (default)</option>
-            <option value="ON_LEAVE">On leave</option>
-            <option value="INACTIVE">Inactive</option>
-            <option value="ALL">All</option>
-          </select>
+          <FilterSelect
+            id="status"
+            name="status"
+            defaultValue={statusParam || FILTER_ALL_VALUE}
+            options={[
+              { value: FILTER_ALL_VALUE, label: "Active (default)" },
+              { value: "ON_LEAVE", label: "On leave" },
+              { value: "INACTIVE", label: "Inactive" },
+              { value: "ALL", label: "All" },
+            ]}
+          />
         </div>
         {/* Same "field" (h-9) size as the other two Apply buttons — see
             students/page.tsx's comment for why this exists. */}

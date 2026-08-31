@@ -4,7 +4,7 @@ import { UserGroupIcon, Alert02Icon } from "@hugeicons/core-free-icons";
 
 import { prisma } from "@/lib/prisma";
 import { getGradingConfig } from "@/lib/grading-settings";
-import { FILTER_SELECT_CLASSNAME } from "@/lib/filter-select-class";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { requireTeacher, teacherAssignments } from "@/lib/teacher";
 import { parseTerm } from "@/lib/validation/id";
 import { Button } from "@/components/ui/button";
@@ -200,18 +200,15 @@ export default async function TeacherGradesPage({
             >
               Class and subject
             </label>
-            <select
+            <FilterSelect
               id="pair"
               name="pair"
               defaultValue={`${active.classId}|${active.subjectId}`}
-              className={`${FILTER_SELECT_CLASSNAME} w-full`}
-            >
-              {assignments.map((a) => (
-                <option key={a.id} value={`${a.classId}|${a.subjectId}`}>
-                  {a.class.name} — {a.subject.name}
-                </option>
-              ))}
-            </select>
+              options={assignments.map((a) => ({
+                value: `${a.classId}|${a.subjectId}`,
+                label: `${a.class.name} — ${a.subject.name}`,
+              }))}
+            />
           </div>
           <Button type="submit" variant="secondary" size="field">
             Open

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { average, scoreToLetter } from "@/lib/grading";
 import { getGradingConfig } from "@/lib/grading-settings";
-import { FILTER_SELECT_CLASSNAME } from "@/lib/filter-select-class";
+import { FilterSelect, FILTER_ALL_VALUE } from "@/components/ui/filter-select";
 import { parseTerm } from "@/lib/validation/id";
 import { GradeEditRow } from "./grade-edit-row";
 import { SubjectBreakdown } from "./subject-breakdown";
@@ -78,8 +78,8 @@ export default async function AdminGradesPage({
     params.class && gradedClasses.some((c) => c.id === params.class) ? params.class : gradedClasses[0].id;
   const selectedClass = gradedClasses.find((c) => c.id === classId)!;
 
-  const subjectId = params.subject ?? "";
-  const statusParam = params.status ?? "";
+  const subjectId = params.subject && params.subject !== FILTER_ALL_VALUE ? params.subject : "";
+  const statusParam = params.status && params.status !== FILTER_ALL_VALUE ? params.status : "";
   const page = Math.max(1, Number(params.page) || 1);
 
   const classSubjects = await prisma.subject.findMany({
@@ -153,47 +153,57 @@ export default async function AdminGradesPage({
           <label className="text-xs text-muted-foreground" htmlFor="class">
             Class
           </label>
-          <select id="class" name="class" defaultValue={classId} className={FILTER_SELECT_CLASSNAME}>
-            {gradedClasses.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          <FilterSelect
+            id="class"
+            name="class"
+            defaultValue={classId}
+            options={gradedClasses.map((c) => ({ value: c.id, label: c.name }))}
+          />
         </div>
         <div>
           <label className="text-xs text-muted-foreground" htmlFor="subject">
             Subject
           </label>
-          <select id="subject" name="subject" defaultValue={subjectId} className={FILTER_SELECT_CLASSNAME}>
-            <option value="">All subjects (view only)</option>
-            {classSubjects.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+          <FilterSelect
+            id="subject"
+            name="subject"
+            defaultValue={subjectId || FILTER_ALL_VALUE}
+            options={[
+              { value: FILTER_ALL_VALUE, label: "All subjects (view only)" },
+              ...classSubjects.map((s) => ({ value: s.id, label: s.name })),
+            ]}
+          />
         </div>
         <div>
           <label className="text-xs text-muted-foreground" htmlFor="term">
             Term
           </label>
-          <select id="term" name="term" defaultValue={term} className={FILTER_SELECT_CLASSNAME}>
-            <option value="TERM_1">Term 1</option>
-            <option value="TERM_2">Term 2</option>
-            <option value="TERM_3">Term 3</option>
-          </select>
+          <FilterSelect
+            id="term"
+            name="term"
+            defaultValue={term}
+            options={[
+              { value: "TERM_1", label: "Term 1" },
+              { value: "TERM_2", label: "Term 2" },
+              { value: "TERM_3", label: "Term 3" },
+            ]}
+          />
         </div>
         <div>
           <label className="text-xs text-muted-foreground" htmlFor="status">
             Status
           </label>
-          <select id="status" name="status" defaultValue={statusParam} className={FILTER_SELECT_CLASSNAME}>
-            <option value="">Active (default)</option>
-            <option value="AT_RISK">At risk</option>
-            <option value="INACTIVE">Inactive</option>
-            <option value="ALL">All</option>
-          </select>
+          <FilterSelect
+            id="status"
+            name="status"
+            defaultValue={statusParam || FILTER_ALL_VALUE}
+            options={[
+              { value: FILTER_ALL_VALUE, label: "Active (default)" },
+              { value: "AT_RISK", label: "At risk" },
+              { value: "INACTIVE", label: "Inactive" },
+              { value: "ALL", label: "All" },
+            ]}
+          />
         </div>
         {/* Same "field" (h-9) size as the other two Apply buttons — see
             students/page.tsx's comment for why this exists. */}

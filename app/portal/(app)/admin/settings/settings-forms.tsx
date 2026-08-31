@@ -13,7 +13,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { FILTER_SELECT_CLASSNAME } from "@/lib/filter-select-class";
+import { FilterSelect } from "@/components/ui/filter-select";
 import {
   type GradingConfig,
   validateGradingConfig,
@@ -88,22 +88,17 @@ export function AcademicPeriodForm({
         </div>
         <div>
           <Label htmlFor="term">Term</Label>
-          <select
+          <FilterSelect
             id="term"
             value={term}
-            className={FILTER_SELECT_CLASSNAME}
-            onChange={(e) => {
+            className="w-36"
+            onValueChange={(v) => {
               setSaved(false);
               setError(null);
-              setTerm(e.target.value as TermValue);
+              setTerm(v as TermValue);
             }}
-          >
-            {(Object.keys(TERM_LABEL) as TermValue[]).map((t) => (
-              <option key={t} value={t}>
-                {TERM_LABEL[t]}
-              </option>
-            ))}
-          </select>
+            options={(Object.keys(TERM_LABEL) as TermValue[]).map((t) => ({ value: t, label: TERM_LABEL[t] }))}
+          />
         </div>
         <Button
           size="field"

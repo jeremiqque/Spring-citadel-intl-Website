@@ -20,6 +20,7 @@ import {
 import { studentFormSchema, type StudentFormValues } from "@/lib/validation/student";
 import { createStudentAction, updateStudentAction } from "./actions";
 import { StudentPhotoPicker } from "./student-photo-picker";
+import { DateOfBirthField } from "./date-of-birth-field";
 
 type ClassOption = { id: string; name: string; code: string };
 
@@ -154,8 +155,8 @@ export function StudentForm({
           sections instead, with short fields (date of birth/gender,
           guardian name/phone) paired side by side rather than each getting
           its own full-width row. */}
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="max-w-2xl space-y-8">
-        <div className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="max-w-2xl space-y-5">
+        <div className="space-y-3">
           <h2 className="text-sm font-medium text-foreground">Student details</h2>
 
           <StudentPhotoPicker
@@ -165,16 +166,42 @@ export function StudentForm({
             name={watch("name")}
           />
 
-          <div>
-            <Label htmlFor="name">Full name</Label>
-            <Input id="name" className="mt-2" aria-invalid={!!errors.name} {...register("name")} />
-            {errors.name && <p className="mt-1 text-sm text-destructive">{errors.name.message}</p>}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="name">Full name</Label>
+              <Input id="name" className="mt-1.5" aria-invalid={!!errors.name} {...register("name")} />
+              {errors.name && <p className="mt-1 text-sm text-destructive">{errors.name.message}</p>}
+            </div>
+
+            <div>
+              <Label>Class</Label>
+              <Select value={classId} onValueChange={(v) => setValue("classId", v, { shouldValidate: true })}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Select class" />
+                </SelectTrigger>
+                <SelectContent>
+                  {classes.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.classId && <p className="mt-1 text-sm text-destructive">{errors.classId.message}</p>}
+            </div>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <Label htmlFor="dob">Date of birth</Label>
-              <Input id="dob" type="date" className="mt-2" aria-invalid={!!errors.dob} {...register("dob")} />
+              <Label id="dob-label">Date of birth</Label>
+              <div className="mt-1.5">
+                <DateOfBirthField
+                  value={watch("dob")}
+                  onChange={(next) => setValue("dob", next, { shouldValidate: true })}
+                  invalid={!!errors.dob}
+                  labelId="dob-label"
+                />
+              </div>
               {errors.dob && <p className="mt-1 text-sm text-destructive">{errors.dob.message}</p>}
             </div>
 
@@ -184,7 +211,7 @@ export function StudentForm({
                 value={gender}
                 onValueChange={(v) => setValue("gender", v as "MALE" | "FEMALE", { shouldValidate: true })}
               >
-                <SelectTrigger className="mt-2">
+                <SelectTrigger className="mt-1.5">
                   <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
                 <SelectContent>
@@ -195,50 +222,30 @@ export function StudentForm({
               {errors.gender && <p className="mt-1 text-sm text-destructive">{errors.gender.message}</p>}
             </div>
           </div>
-
-          <div>
-            <Label>Class</Label>
-            <Select value={classId} onValueChange={(v) => setValue("classId", v, { shouldValidate: true })}>
-              <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Select class" />
-              </SelectTrigger>
-              <SelectContent>
-                {classes.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.classId && <p className="mt-1 text-sm text-destructive">{errors.classId.message}</p>}
-          </div>
         </div>
 
-        <div className="space-y-5 border-t border-border pt-6">
+        <div className="space-y-3 border-t border-border pt-4">
           <h2 className="text-sm font-medium text-foreground">Additional details</h2>
           <p className="text-sm text-muted-foreground">
             From the admission form. All optional — fill in what you have.
           </p>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <Label htmlFor="nationality">Nationality</Label>
-              <Input id="nationality" className="mt-2" {...register("nationality")} />
+              <Input id="nationality" className="mt-1.5" {...register("nationality")} />
             </div>
             <div>
               <Label htmlFor="motherTongue">Mother tongue</Label>
-              <Input id="motherTongue" className="mt-2" {...register("motherTongue")} />
+              <Input id="motherTongue" className="mt-1.5" {...register("motherTongue")} />
             </div>
-          </div>
-
-          <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <Label htmlFor="placeOfBirth">Place of birth</Label>
-              <Input id="placeOfBirth" className="mt-2" {...register("placeOfBirth")} />
+              <Input id="placeOfBirth" className="mt-1.5" {...register("placeOfBirth")} />
             </div>
             <div>
               <Label htmlFor="previousSchool">Previous school</Label>
-              <Input id="previousSchool" className="mt-2" {...register("previousSchool")} />
+              <Input id="previousSchool" className="mt-1.5" {...register("previousSchool")} />
             </div>
           </div>
 
@@ -261,15 +268,15 @@ export function StudentForm({
           </div>
         </div>
 
-        <div className="space-y-5 border-t border-border pt-6">
+        <div className="space-y-3 border-t border-border pt-4">
           <h2 className="text-sm font-medium text-foreground">Guardian details</h2>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label htmlFor="guardianName">Guardian full name</Label>
               <Input
                 id="guardianName"
-                className="mt-2"
+                className="mt-1.5"
                 aria-invalid={!!errors.guardianName}
                 {...register("guardianName")}
               />
@@ -282,7 +289,7 @@ export function StudentForm({
               <Label htmlFor="guardianPhone">Guardian phone number</Label>
               <Input
                 id="guardianPhone"
-                className="mt-2"
+                className="mt-1.5"
                 aria-invalid={!!errors.guardianPhone}
                 {...register("guardianPhone")}
               />
@@ -294,63 +301,64 @@ export function StudentForm({
 
           <div>
             <Label htmlFor="address">Address</Label>
-            <Input id="address" className="mt-2" aria-invalid={!!errors.address} {...register("address")} />
+            <Input id="address" className="mt-1.5" aria-invalid={!!errors.address} {...register("address")} />
             {errors.address && <p className="mt-1 text-sm text-destructive">{errors.address.message}</p>}
           </div>
+        </div>
 
-        <div className="space-y-5 border-t border-border pt-6">
+        <div className="space-y-3 border-t border-border pt-4">
           <h2 className="text-sm font-medium text-foreground">Father's details</h2>
           <p className="text-sm text-muted-foreground">Optional — from the admission form.</p>
 
           <div>
             <Label htmlFor="fatherName">Father's details full name</Label>
-            <Input id="fatherName" className="mt-2" {...register("fatherName")} />
+            <Input id="fatherName" className="mt-1.5" {...register("fatherName")} />
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label htmlFor="fatherNationality">Nationality</Label>
-              <Input id="fatherNationality" className="mt-2" {...register("fatherNationality")} />
+              <Input id="fatherNationality" className="mt-1.5" {...register("fatherNationality")} />
             </div>
             <div>
               <Label htmlFor="fatherState">State</Label>
-              <Input id="fatherState" className="mt-2" {...register("fatherState")} />
+              <Input id="fatherState" className="mt-1.5" {...register("fatherState")} />
             </div>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label htmlFor="fatherProfession">Profession</Label>
-              <Input id="fatherProfession" className="mt-2" {...register("fatherProfession")} />
+              <Input id="fatherProfession" className="mt-1.5" {...register("fatherProfession")} />
             </div>
             <div>
               <Label htmlFor="fatherEmployer">Employer</Label>
-              <Input id="fatherEmployer" className="mt-2" {...register("fatherEmployer")} />
+              <Input id="fatherEmployer" className="mt-1.5" {...register("fatherEmployer")} />
             </div>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label htmlFor="fatherPoBox">P.O. Box</Label>
-              <Input id="fatherPoBox" className="mt-2" {...register("fatherPoBox")} />
+              <Input id="fatherPoBox" className="mt-1.5" {...register("fatherPoBox")} />
             </div>
             <div>
               <Label htmlFor="fatherAddress">Residential address</Label>
-              <Input id="fatherAddress" className="mt-2" {...register("fatherAddress")} />
+              <Input id="fatherAddress" className="mt-1.5" {...register("fatherAddress")} />
             </div>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label htmlFor="fatherPhone">Mobile no.</Label>
-              <Input id="fatherPhone" className="mt-2" {...register("fatherPhone")} />
+              <Input id="fatherPhone" className="mt-1.5" {...register("fatherPhone")} />
             </div>
             <div>
               <Label htmlFor="fatherEmail">Email</Label>
               <Input
                 id="fatherEmail"
                 type="email"
-                className="mt-2"
+                className="mt-1.5"
                 aria-invalid={!!errors.fatherEmail}
                 {...register("fatherEmail")}
               />
@@ -360,59 +368,59 @@ export function StudentForm({
             </div>
           </div>
         </div>
-        <div className="space-y-5 border-t border-border pt-6">
+        <div className="space-y-3 border-t border-border pt-4">
           <h2 className="text-sm font-medium text-foreground">Mother's details</h2>
           <p className="text-sm text-muted-foreground">Optional — from the admission form.</p>
 
           <div>
             <Label htmlFor="motherName">Mother's details full name</Label>
-            <Input id="motherName" className="mt-2" {...register("motherName")} />
+            <Input id="motherName" className="mt-1.5" {...register("motherName")} />
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label htmlFor="motherNationality">Nationality</Label>
-              <Input id="motherNationality" className="mt-2" {...register("motherNationality")} />
+              <Input id="motherNationality" className="mt-1.5" {...register("motherNationality")} />
             </div>
             <div>
               <Label htmlFor="motherState">State</Label>
-              <Input id="motherState" className="mt-2" {...register("motherState")} />
+              <Input id="motherState" className="mt-1.5" {...register("motherState")} />
             </div>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label htmlFor="motherProfession">Profession</Label>
-              <Input id="motherProfession" className="mt-2" {...register("motherProfession")} />
+              <Input id="motherProfession" className="mt-1.5" {...register("motherProfession")} />
             </div>
             <div>
               <Label htmlFor="motherEmployer">Employer</Label>
-              <Input id="motherEmployer" className="mt-2" {...register("motherEmployer")} />
+              <Input id="motherEmployer" className="mt-1.5" {...register("motherEmployer")} />
             </div>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label htmlFor="motherPoBox">P.O. Box</Label>
-              <Input id="motherPoBox" className="mt-2" {...register("motherPoBox")} />
+              <Input id="motherPoBox" className="mt-1.5" {...register("motherPoBox")} />
             </div>
             <div>
               <Label htmlFor="motherAddress">Residential address</Label>
-              <Input id="motherAddress" className="mt-2" {...register("motherAddress")} />
+              <Input id="motherAddress" className="mt-1.5" {...register("motherAddress")} />
             </div>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label htmlFor="motherPhone">Mobile no.</Label>
-              <Input id="motherPhone" className="mt-2" {...register("motherPhone")} />
+              <Input id="motherPhone" className="mt-1.5" {...register("motherPhone")} />
             </div>
             <div>
               <Label htmlFor="motherEmail">Email</Label>
               <Input
                 id="motherEmail"
                 type="email"
-                className="mt-2"
+                className="mt-1.5"
                 aria-invalid={!!errors.motherEmail}
                 {...register("motherEmail")}
               />
@@ -421,8 +429,6 @@ export function StudentForm({
               )}
             </div>
           </div>
-        </div>
-
         </div>
 
         {formError && (

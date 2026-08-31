@@ -8,25 +8,10 @@ import { PUBLIC_USER } from "@/lib/user-select";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
-import { FILTER_SELECT_CLASSNAME } from "@/lib/filter-select-class";
-import { StudentRowActions } from "./student-row-actions";
+import { FilterSelect, FILTER_ALL_VALUE } from "@/components/ui/filter-select";
+import { StudentTable } from "./student-table";
 
 const PAGE_SIZE = 25;
-
-function statusBadgeVariant(status: string): "success" | "warning" | "outline" {
-  if (status === "ACTIVE") return "success";
-  if (status === "AT_RISK") return "warning";
-  return "outline"; // INACTIVE
-}
 
 export default async function StudentsPage({
   searchParams,
@@ -45,8 +30,10 @@ export default async function StudentsPage({
 }) {
   const params = await searchParams;
   const q = firstParam(params.q)?.trim() ?? "";
-  const classId = firstParam(params.class) ?? "";
-  const statusParam = firstParam(params.status) ?? "";
+  const classIdRaw = firstParam(params.class) ?? "";
+  const classId = classIdRaw === FILTER_ALL_VALUE ? "" : classIdRaw;
+  const statusParamRaw = firstParam(params.status) ?? "";
+  const statusParam = statusParamRaw === FILTER_ALL_VALUE ? "" : statusParamRaw;
   const page = Math.max(1, Number(firstParam(params.page)) || 1);
 
   const where: Prisma.StudentWhereInput = {};
@@ -117,25 +104,31 @@ export default async function StudentsPage({
           <label className="text-xs text-muted-foreground" htmlFor="class">
             Class
           </label>
-          <select id="class" name="class" defaultValue={classId} className={FILTER_SELECT_CLASSNAME}>
-            <option value="">All classes</option>
-            {classes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          <FilterSelect
+            id="class"
+            name="class"
+            defaultValue={classId || FILTER_ALL_VALUE}
+            options={[
+              { value: FILTER_ALL_VALUE, label: "All classes" },
+              ...classes.map((c) => ({ value: c.id, label: c.name })),
+            ]}
+          />
         </div>
         <div>
           <label className="text-xs text-muted-foreground" htmlFor="status">
             Status
           </label>
-          <select id="status" name="status" defaultValue={statusParam} className={FILTER_SELECT_CLASSNAME}>
-            <option value="">Active (default)</option>
-            <option value="AT_RISK">At risk</option>
-            <option value="INACTIVE">Inactive</option>
-            <option value="ALL">All</option>
-          </select>
+          <FilterSelect
+            id="status"
+            name="status"
+            defaultValue={statusParam || FILTER_ALL_VALUE}
+            options={[
+              { value: FILTER_ALL_VALUE, label: "Active (default)" },
+              { value: "AT_RISK", label: "At risk" },
+              { value: "INACTIVE", label: "Inactive" },
+              { value: "ALL", label: "All" },
+            ]}
+          />
         </div>
         {/* Action cluster from Figma node 4261:6100: glossy primary, a 24px
             vertical rule, then outlined secondaries with leading icons, 10px
@@ -195,47 +188,16 @@ export default async function StudentsPage({
         </div>
       </form>
 
-      <div className="rounded-lg border border-border">
-        <Table caption="Enrolled students matching the current filters">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Admission No.</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Class</TableHead>
-              <TableHead>Gender</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {students.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                  No students match these filters.
-                </TableCell>
-              </TableRow>
-            )}
-            {students.map((s) => (
-              <TableRow key={s.id}>
-                <TableCell className="font-mono text-xs">{s.admissionNo}</TableCell>
-                <TableCell>
-                  <Link href={`/portal/admin/students/${s.id}`} className="hover:underline">
-                    {s.user.name}
-                  </Link>
-                </TableCell>
-                <TableCell>{s.class.name}</TableCell>
-                <TableCell className="capitalize">{s.gender.toLowerCase()}</TableCell>
-                <TableCell>
-                  <Badge variant={statusBadgeVariant(s.status)}>{s.status.replace("_", " ")}</Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <StudentRowActions studentId={s.id} studentName={s.user.name} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <StudentTable
+        students={students.map((s) => ({
+          id: s.id,
+          admissionNo: s.admissionNo,
+          name: s.user.name,
+          className: s.class.name,
+          gender: s.gender,
+          status: s.status,
+        }))}
+      />
 
       <Pagination
           page={page}

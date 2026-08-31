@@ -3,7 +3,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { UserGroupIcon } from "@hugeicons/core-free-icons";
 
 import { prisma } from "@/lib/prisma";
-import { FILTER_SELECT_CLASSNAME } from "@/lib/filter-select-class";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { parseTerm } from "@/lib/validation/id";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -108,13 +108,12 @@ export default async function AdminPsychomotorPage({
             <label className="text-2xs font-medium tracking-[0.08em] text-muted-foreground uppercase" htmlFor="class">
               Class
             </label>
-            <select id="class" name="class" defaultValue={activeClassId} className={`${FILTER_SELECT_CLASSNAME} w-full`}>
-              {classes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+            <FilterSelect
+              id="class"
+              name="class"
+              defaultValue={activeClassId}
+              options={classes.map((c) => ({ value: c.id, label: c.name }))}
+            />
           </div>
           <Button type="submit" variant="secondary" size="field">
             Open

@@ -1,8 +1,6 @@
-import { firstParam } from "@/lib/search-params";
 import { prisma } from "@/lib/prisma";
 import { PUBLIC_USER } from "@/lib/user-select";
 import { Badge } from "@/components/ui/badge";
-import { FILTER_SELECT_CLASSNAME } from "@/lib/filter-select-class";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -13,6 +11,8 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { SubjectCoverage, type SubjectAssignment } from "./subject-coverage";
+import { SubjectForm } from "./subject-form";
+import { SubjectRowActions } from "./subject-row-actions";
 
 const LEVEL_LABEL: Record<string, string> = {
   EARLY_YEARS: "Early Years",
@@ -28,44 +28,63 @@ const STREAM_LABEL: Record<string, string> = {
   COMMERCIAL: "Commercial",
 };
 
-const LEVELS = ["EARLY_YEARS", "PRIMARY", "JSS", "SS"] as const;
-type LevelValue = (typeof LEVELS)[number];
+type SubjectRow = Awaited<ReturnType<typeof prisma.subject.findMany>>[number];
 
 /**
- * Subjects — the curriculum is read-only here, coverage is not.
- *
- * `Subject.code` does not feed anything printed, but a subject's `levels`
- * array decides which classes it can be assigned to and therefore which
- * grade sheets exist, and `streams` encodes the SS field structure the
- * school confirmed on 14 Aug 2026. Editing those is a curriculum decision,
- * not an admin task, and the seed script is where it is recorded.
- *
- * "Teachers assigned" is the one column that is not read-only: it used to
- * just be a count that sent an admin off to a teacher's profile to actually
- * do anything about it. SubjectCoverage opens the same list right here, and
- * calls the same addAssignmentAction/removeAssignmentAction the teacher
- * profile's AssignmentManager does — one underlying mutation, reachable from
- * whichever screen the admin happened to be looking at a gap on.
+ * A section is "every subject whose levels/streams put it in this bucket."
+ * The same subject can appear in more than one section — Agricultural
+ * Science runs at both JSS (no field structure there) and SS Science, so it
+ * legitimately belongs in both the Junior Secondary table and the Senior
+ * Secondary · Science table. That mirrors the real curriculum rather than
+ * hiding it.
  */
-export default async function AdminSubjectsPage({
-  searchParams,
-}: {
-  // `string | string[]`, not `string`. Next hands back an ARRAY for a
-  // repeated query key, so `?level=JSS&level=SS` makes this an array while
-  // the type annotation quietly insists otherwise. Harmless here only because
-  // the value is whitelisted below before it reaches Prisma — the annotation
-  // is what makes that easy to forget.
-  searchParams: Promise<{ level?: string | string[] }>;
-}) {
-  const params = await searchParams;
-  const rawLevel = firstParam(params.level);
-  const level = LEVELS.includes(rawLevel as LevelValue) ? (rawLevel as LevelValue) : undefined;
+type Section = { key: string; title: string; subjects: SubjectRow[] };
 
+function buildSections(subjects: SubjectRow[]): Section[] {
+  const sections: Section[] = [
+    { key: "EARLY_YEARS", title: "Nursery (Early Years)", subjects: subjects.filter((s) => s.levels.includes("EARLY_YEARS")) },
+    { key: "PRIMARY", title: "Primary", subjects: subjects.filter((s) => s.levels.includes("PRIMARY")) },
+    { key: "JSS", title: "Junior Secondary (JSS)", subjects: subjects.filter((s) => s.levels.includes("JSS")) },
+  ];
+
+  const ssSubjects = subjects.filter((s) => s.levels.includes("SS"));
+  const ssStreamOrder = ["CORE", "SCIENCE", "ARTS", "COMMERCIAL"] as const;
+  for (const stream of ssStreamOrder) {
+    const inStream = ssSubjects.filter((s) => s.streams.includes(stream));
+    if (inStream.length > 0) {
+      sections.push({ key: `SS_${stream}`, title: `Senior Secondary · ${STREAM_LABEL[stream]}`, subjects: inStream });
+    }
+  }
+  // SS subjects with no field at all — should not normally happen given the
+  // seeded curriculum, but a field-less SS subject is valid at the schema
+  // level, so it needs somewhere to show up rather than silently vanishing
+  // from the page.
+  const ssUnstreamed = ssSubjects.filter((s) => s.streams.length === 0);
+  if (ssUnstreamed.length > 0) {
+    sections.push({ key: "SS_NONE", title: "Senior Secondary · General", subjects: ssUnstreamed });
+  }
+
+  return sections.filter((s) => s.subjects.length > 0);
+}
+
+/**
+ * Subjects — the curriculum itself is now an admin task, not a seed-script
+ * one (see actions.ts). Grouped into the sections the office actually thinks
+ * in — Nursery, Primary, JSS, and Senior Secondary split by field — instead
+ * of one flat alphabetical table, because "which subjects does SS Science
+ * take" was a scroll-and-squint exercise before.
+ *
+ * `Subject.levels` is still the entire mechanism for "which classes teach
+ * this" — see createSubjectAction/updateSubjectAction's comments — so
+ * checking/unchecking a level in the form is how a subject is added to or
+ * removed from a class's curriculum; there is no separate per-class picker.
+ *
+ * "Teachers assigned" is unchanged from before: SubjectCoverage opens the
+ * same add/remove-assignment flow right here.
+ */
+export default async function AdminSubjectsPage() {
   const [subjects, assignments, allClasses, allTeachers] = await Promise.all([
-    prisma.subject.findMany({
-      where: level ? { levels: { has: level } } : {},
-      orderBy: { name: "asc" },
-    }),
+    prisma.subject.findMany({ orderBy: { name: "asc" } }),
     // Full rows, not just counts — SubjectCoverage's dialog lists who's
     // assigned, not just how many. ON_LEAVE teachers still count as
     // assigned — the class is covered on paper, and an admin looking for
@@ -95,124 +114,127 @@ export default async function AdminSubjectsPage({
   }
 
   const teacherOptions = allTeachers.map((t) => ({ id: t.id, name: t.user.name }));
-
   const uncovered = subjects.filter((s) => !assignmentsBySubject.has(s.id)).length;
+  const sections = buildSections(subjects);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Subjects</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {subjects.length} subject{subjects.length === 1 ? "" : "s"}
-          {level ? ` at ${LEVEL_LABEL[level]}` : ""} ·{" "}
-          {uncovered === 0 ? "all assigned to a teacher" : `${uncovered} with no teacher assigned`}
-        </p>
-      </div>
-
-      {/* Plain GET form over a native select, matching every other admin
-          filter row: each combination is a shareable, JS-free URL. */}
-      <form className="flex flex-wrap items-end gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <label className="text-xs text-muted-foreground" htmlFor="level">
-            Level
-          </label>
-          <select id="level" name="level" defaultValue={level ?? ""} className={FILTER_SELECT_CLASSNAME}>
-            <option value="">All levels</option>
-            {LEVELS.map((l) => (
-              <option key={l} value={l}>
-                {LEVEL_LABEL[l]}
-              </option>
-            ))}
-          </select>
+          <h1 className="text-2xl font-semibold text-foreground">Subjects</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {subjects.length} subject{subjects.length === 1 ? "" : "s"} ·{" "}
+            {uncovered === 0 ? "all assigned to a teacher" : `${uncovered} with no teacher assigned`}
+          </p>
         </div>
-        <Button type="submit" variant="secondary" size="field">
-          Apply
-        </Button>
-      </form>
-
-      <div className="rounded-lg border border-border">
-        <Table caption={level ? `Subjects at ${LEVEL_LABEL[level]}` : "All subjects"}>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Subject</TableHead>
-              <TableHead>Code</TableHead>
-              <TableHead>Levels</TableHead>
-              <TableHead>SS field</TableHead>
-              <TableHead>Teachers assigned</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {subjects.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
-                  No subjects match this level.
-                </TableCell>
-              </TableRow>
-            )}
-            {subjects.map((s) => {
-              const subjectAssignments = assignmentsBySubject.get(s.id) ?? [];
-              const subjectClasses = allClasses
-                .filter((c) => s.levels.includes(c.level))
-                .map((c) => ({ id: c.id, name: c.name }));
-              return (
-                <TableRow key={s.id}>
-                  <TableCell>
-                    <span className="flex flex-wrap items-center gap-2">
-                      {s.name}
-                      {/* Compulsory is meaningful only at SS. Showing the
-                          flag on a JSS-only subject would imply a rule that
-                          does not exist there. */}
-                      {s.compulsory && <Badge variant="secondary">Compulsory</Badge>}
-                    </span>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">{s.code}</TableCell>
-                  <TableCell>
-                    <span className="flex flex-wrap gap-1">
-                      {s.levels.map((l) => (
-                        <Badge key={l} variant="outline">
-                          {LEVEL_LABEL[l] ?? l}
-                        </Badge>
-                      ))}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {s.streams.length === 0 ? (
-                      <span className="text-muted-foreground">—</span>
-                    ) : (
-                      <span className="flex flex-wrap gap-1">
-                        {s.streams.map((st) => (
-                          <Badge key={st} variant="outline">
-                            {STREAM_LABEL[st] ?? st}
-                          </Badge>
-                        ))}
-                      </span>
-                    )}
-                  </TableCell>
-                  {/* The actionable column: a subject with nobody assigned
-                      has no grade sheet and no one able to mark it. Click
-                      through to see who, or assign someone right here. */}
-                  <TableCell>
-                    <SubjectCoverage
-                      subjectId={s.id}
-                      subjectName={s.name}
-                      assignments={subjectAssignments}
-                      classes={subjectClasses}
-                      teachers={teacherOptions}
-                    />
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+        <SubjectForm mode="create" trigger={<Button size="sm">Add subject</Button>} />
       </div>
+
+      {subjects.length === 0 && (
+        <div className="rounded-lg border border-border py-12 text-center text-sm text-muted-foreground">
+          No subjects yet. Add the first one to start building the curriculum.
+        </div>
+      )}
+
+      {sections.map((section) => (
+        <div key={section.key} className="space-y-2">
+          <h2 className="text-sm font-medium text-foreground">
+            {section.title}{" "}
+            <span className="font-normal text-muted-foreground">
+              ({section.subjects.length} subject{section.subjects.length === 1 ? "" : "s"})
+            </span>
+          </h2>
+          <div className="rounded-lg border border-border">
+            <Table caption={section.title}>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Subject</TableHead>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Levels</TableHead>
+                  <TableHead>SS field</TableHead>
+                  <TableHead>Teachers assigned</TableHead>
+                  <TableHead className="w-10" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {section.subjects.map((s) => {
+                  const subjectAssignments = assignmentsBySubject.get(s.id) ?? [];
+                  const subjectClasses = allClasses
+                    .filter((c) => s.levels.includes(c.level))
+                    .map((c) => ({ id: c.id, name: c.name }));
+                  return (
+                    <TableRow key={s.id}>
+                      <TableCell>
+                        <span className="flex flex-wrap items-center gap-2">
+                          {s.name}
+                          {/* Compulsory is meaningful only at SS. Showing the
+                              flag on a JSS-only subject would imply a rule
+                              that does not exist there. */}
+                          {s.compulsory && <Badge variant="secondary">Compulsory</Badge>}
+                        </span>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">{s.code}</TableCell>
+                      <TableCell>
+                        <span className="flex flex-wrap gap-1">
+                          {s.levels.map((l) => (
+                            <Badge key={l} variant="outline">
+                              {LEVEL_LABEL[l] ?? l}
+                            </Badge>
+                          ))}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {s.streams.length === 0 ? (
+                          <span className="text-muted-foreground">—</span>
+                        ) : (
+                          <span className="flex flex-wrap gap-1">
+                            {s.streams.map((st) => (
+                              <Badge key={st} variant="outline">
+                                {STREAM_LABEL[st] ?? st}
+                              </Badge>
+                            ))}
+                          </span>
+                        )}
+                      </TableCell>
+                      {/* The actionable column: a subject with nobody
+                          assigned has no grade sheet and no one able to mark
+                          it. Click through to see who, or assign someone
+                          right here. */}
+                      <TableCell>
+                        <SubjectCoverage
+                          subjectId={s.id}
+                          subjectName={s.name}
+                          assignments={subjectAssignments}
+                          classes={subjectClasses}
+                          teachers={teacherOptions}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <SubjectRowActions
+                          subject={{
+                            id: s.id,
+                            name: s.name,
+                            code: s.code,
+                            levels: s.levels,
+                            streams: s.streams,
+                            compulsory: s.compulsory,
+                          }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      ))}
 
       <p className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-        The curriculum itself is read-only here. Which levels a subject runs at decides which
-        grade sheets exist, and the SS field groupings are the curriculum the school
-        confirmed — both are changes to the seed script rather than admin tasks. Assigning a
-        teacher is not: open a subject&apos;s &quot;Teachers assigned&quot; count to see who
-        covers it, or add someone directly from there.
+        Which levels a subject is checked for decides which classes teach it and which grade
+        sheets exist — there is no separate per-class picker. Assigning a teacher is separate: open
+        a subject&apos;s &quot;Teachers assigned&quot; count to see who covers it, or add someone
+        directly from there.
       </p>
     </div>
   );

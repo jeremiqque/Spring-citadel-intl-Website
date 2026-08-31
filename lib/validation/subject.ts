@@ -8,6 +8,9 @@ import { z } from "zod";
 export const LEVEL_VALUES = ["EARLY_YEARS", "PRIMARY", "JSS", "SS"] as const;
 export const STREAM_VALUES = ["CORE", "SCIENCE", "ARTS", "COMMERCIAL"] as const;
 
+export type Level = (typeof LEVEL_VALUES)[number];
+export type SubjectStream = (typeof STREAM_VALUES)[number];
+
 /**
  * A subject's `code` doubles as its unique key at the database level
  * (`Subject.code @unique`) and shows up read-only elsewhere (grade sheets,

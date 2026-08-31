@@ -57,12 +57,21 @@ export type SubjectEditTarget = {
 export function SubjectForm({
   mode,
   subject,
+  initialLevels,
+  initialStreams,
   open,
   onOpenChange,
   trigger,
 }: {
   mode: "create" | "edit";
   subject?: SubjectEditTarget;
+  // Pre-checked when opening "Add subject" from inside a section page (see
+  // sections.ts) — so adding a subject from Junior Secondary starts with
+  // JSS already ticked instead of making the office pick it twice. Ignored
+  // in edit mode, where `subject`'s own levels/streams are the source of
+  // truth.
+  initialLevels?: SubjectFormValues["levels"];
+  initialStreams?: SubjectFormValues["streams"];
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   /** Only used in create mode — edit mode is opened from outside. */
@@ -84,8 +93,8 @@ export function SubjectForm({
     defaultValues: {
       name: subject?.name ?? "",
       code: subject?.code ?? "",
-      levels: subject?.levels ?? [],
-      streams: subject?.streams ?? [],
+      levels: subject?.levels ?? initialLevels ?? [],
+      streams: subject?.streams ?? initialStreams ?? [],
       compulsory: subject?.compulsory ?? false,
     },
   });

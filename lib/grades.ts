@@ -2,6 +2,7 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 import { scoreToLetter, type GradingConfig } from "@/lib/grading";
 import { getGradingConfig } from "@/lib/grading-settings";
 import { createNotification, notifyAdmins } from "@/lib/notify";
+import { invalidateTermResultIfStale } from "@/lib/term-result";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 type TermValue = "TERM_1" | "TERM_2" | "TERM_3";
@@ -153,6 +154,17 @@ export async function upsertGrade(
     await recomputeAtRiskStatus(db, params.studentId, params.term, params.session, config);
   } catch (err) {
     console.error("recomputeAtRiskStatus failed after a committed grade write:", err);
+  }
+
+  // Same "wrapped and only logged" treatment as the at-risk recompute right
+  // above, for the same reason: the Grade row is already committed by this
+  // point, and a failure here must never make this write look like it
+  // failed. See lib/term-result.ts for why a compiled/published result goes
+  // stale on any later grade write for that student/term/session.
+  try {
+    await invalidateTermResultIfStale(params.studentId, params.term, params.session);
+  } catch (err) {
+    console.error("invalidateTermResultIfStale failed after a committed grade write:", err);
   }
 
   if (justSubmitted) {

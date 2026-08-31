@@ -29,11 +29,19 @@ export function StudentForm({
   studentId,
   classes,
   defaultValues,
+  doneHref,
 }: {
   mode: "create" | "edit";
   studentId?: string;
   classes: ClassOption[];
   defaultValues?: Partial<StudentFormValues>;
+  // Where "Done" on the post-enroll credentials dialog goes. Admin's own
+  // enroll page leaves this unset and falls back to the student's admin
+  // profile page, as before. The teacher enroll page passes its own
+  // destination — a teacher can't reach /portal/admin/students/[id] at all
+  // (middleware bounces that whole prefix to non-admins), and there's no
+  // teacher-facing per-student page to send them to instead.
+  doneHref?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -57,6 +65,38 @@ export function StudentForm({
       guardianName: defaultValues?.guardianName ?? "",
       guardianPhone: defaultValues?.guardianPhone ?? "",
       address: defaultValues?.address ?? "",
+
+      nationality: defaultValues?.nationality ?? "",
+      motherTongue: defaultValues?.motherTongue ?? "",
+      placeOfBirth: defaultValues?.placeOfBirth ?? "",
+      previousSchool: defaultValues?.previousSchool ?? "",
+
+      sibling1Name: defaultValues?.sibling1Name ?? "",
+      sibling1Class: defaultValues?.sibling1Class ?? "",
+      sibling2Name: defaultValues?.sibling2Name ?? "",
+      sibling2Class: defaultValues?.sibling2Class ?? "",
+      sibling3Name: defaultValues?.sibling3Name ?? "",
+      sibling3Class: defaultValues?.sibling3Class ?? "",
+
+      fatherName: defaultValues?.fatherName ?? "",
+      fatherNationality: defaultValues?.fatherNationality ?? "",
+      fatherState: defaultValues?.fatherState ?? "",
+      fatherProfession: defaultValues?.fatherProfession ?? "",
+      fatherEmployer: defaultValues?.fatherEmployer ?? "",
+      fatherPoBox: defaultValues?.fatherPoBox ?? "",
+      fatherAddress: defaultValues?.fatherAddress ?? "",
+      fatherPhone: defaultValues?.fatherPhone ?? "",
+      fatherEmail: defaultValues?.fatherEmail ?? "",
+
+      motherName: defaultValues?.motherName ?? "",
+      motherNationality: defaultValues?.motherNationality ?? "",
+      motherState: defaultValues?.motherState ?? "",
+      motherProfession: defaultValues?.motherProfession ?? "",
+      motherEmployer: defaultValues?.motherEmployer ?? "",
+      motherPoBox: defaultValues?.motherPoBox ?? "",
+      motherAddress: defaultValues?.motherAddress ?? "",
+      motherPhone: defaultValues?.motherPhone ?? "",
+      motherEmail: defaultValues?.motherEmail ?? "",
     },
   });
 
@@ -159,6 +199,53 @@ export function StudentForm({
         </div>
 
         <div className="space-y-5 border-t border-border pt-6">
+          <h2 className="text-sm font-medium text-foreground">Additional details</h2>
+          <p className="text-sm text-muted-foreground">
+            From the admission form. All optional — fill in what you have.
+          </p>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="nationality">Nationality</Label>
+              <Input id="nationality" className="mt-2" {...register("nationality")} />
+            </div>
+            <div>
+              <Label htmlFor="motherTongue">Mother tongue</Label>
+              <Input id="motherTongue" className="mt-2" {...register("motherTongue")} />
+            </div>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="placeOfBirth">Place of birth</Label>
+              <Input id="placeOfBirth" className="mt-2" {...register("placeOfBirth")} />
+            </div>
+            <div>
+              <Label htmlFor="previousSchool">Previous school</Label>
+              <Input id="previousSchool" className="mt-2" {...register("previousSchool")} />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <Label>Sibling(s) studying in the school</Label>
+            {([1, 2, 3] as const).map((n) => (
+              <div key={n} className="grid gap-3 sm:grid-cols-[1fr_140px]">
+                <Input
+                  aria-label={`Sibling ${n} name`}
+                  placeholder="Name"
+                  {...register(`sibling${n}Name` as const)}
+                />
+                <Input
+                  aria-label={`Sibling ${n} class`}
+                  placeholder="Class"
+                  {...register(`sibling${n}Class` as const)}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-5 border-t border-border pt-6">
           <h2 className="text-sm font-medium text-foreground">Guardian details</h2>
 
           <div className="grid gap-5 sm:grid-cols-2">
@@ -194,6 +281,132 @@ export function StudentForm({
             <Input id="address" className="mt-2" aria-invalid={!!errors.address} {...register("address")} />
             {errors.address && <p className="mt-1 text-sm text-destructive">{errors.address.message}</p>}
           </div>
+
+        <div className="space-y-5 border-t border-border pt-6">
+          <h2 className="text-sm font-medium text-foreground">Father's details</h2>
+          <p className="text-sm text-muted-foreground">Optional — from the admission form.</p>
+
+          <div>
+            <Label htmlFor="fatherName">Father's details full name</Label>
+            <Input id="fatherName" className="mt-2" {...register("fatherName")} />
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="fatherNationality">Nationality</Label>
+              <Input id="fatherNationality" className="mt-2" {...register("fatherNationality")} />
+            </div>
+            <div>
+              <Label htmlFor="fatherState">State</Label>
+              <Input id="fatherState" className="mt-2" {...register("fatherState")} />
+            </div>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="fatherProfession">Profession</Label>
+              <Input id="fatherProfession" className="mt-2" {...register("fatherProfession")} />
+            </div>
+            <div>
+              <Label htmlFor="fatherEmployer">Employer</Label>
+              <Input id="fatherEmployer" className="mt-2" {...register("fatherEmployer")} />
+            </div>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="fatherPoBox">P.O. Box</Label>
+              <Input id="fatherPoBox" className="mt-2" {...register("fatherPoBox")} />
+            </div>
+            <div>
+              <Label htmlFor="fatherAddress">Residential address</Label>
+              <Input id="fatherAddress" className="mt-2" {...register("fatherAddress")} />
+            </div>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="fatherPhone">Mobile no.</Label>
+              <Input id="fatherPhone" className="mt-2" {...register("fatherPhone")} />
+            </div>
+            <div>
+              <Label htmlFor="fatherEmail">Email</Label>
+              <Input
+                id="fatherEmail"
+                type="email"
+                className="mt-2"
+                aria-invalid={!!errors.fatherEmail}
+                {...register("fatherEmail")}
+              />
+              {errors.fatherEmail && (
+                <p className="mt-1 text-sm text-destructive">{errors.fatherEmail.message}</p>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="space-y-5 border-t border-border pt-6">
+          <h2 className="text-sm font-medium text-foreground">Mother's details</h2>
+          <p className="text-sm text-muted-foreground">Optional — from the admission form.</p>
+
+          <div>
+            <Label htmlFor="motherName">Mother's details full name</Label>
+            <Input id="motherName" className="mt-2" {...register("motherName")} />
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="motherNationality">Nationality</Label>
+              <Input id="motherNationality" className="mt-2" {...register("motherNationality")} />
+            </div>
+            <div>
+              <Label htmlFor="motherState">State</Label>
+              <Input id="motherState" className="mt-2" {...register("motherState")} />
+            </div>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="motherProfession">Profession</Label>
+              <Input id="motherProfession" className="mt-2" {...register("motherProfession")} />
+            </div>
+            <div>
+              <Label htmlFor="motherEmployer">Employer</Label>
+              <Input id="motherEmployer" className="mt-2" {...register("motherEmployer")} />
+            </div>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="motherPoBox">P.O. Box</Label>
+              <Input id="motherPoBox" className="mt-2" {...register("motherPoBox")} />
+            </div>
+            <div>
+              <Label htmlFor="motherAddress">Residential address</Label>
+              <Input id="motherAddress" className="mt-2" {...register("motherAddress")} />
+            </div>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="motherPhone">Mobile no.</Label>
+              <Input id="motherPhone" className="mt-2" {...register("motherPhone")} />
+            </div>
+            <div>
+              <Label htmlFor="motherEmail">Email</Label>
+              <Input
+                id="motherEmail"
+                type="email"
+                className="mt-2"
+                aria-invalid={!!errors.motherEmail}
+                {...register("motherEmail")}
+              />
+              {errors.motherEmail && (
+                <p className="mt-1 text-sm text-destructive">{errors.motherEmail.message}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
         </div>
 
         {formError && (
@@ -214,7 +427,7 @@ export function StudentForm({
         open={!!credentials}
         onOpenChange={(open) => {
           if (!open && credentials) {
-            router.push(`/portal/admin/students/${credentials.studentId}`);
+            router.push(doneHref ?? `/portal/admin/students/${credentials.studentId}`);
           }
         }}
       >
@@ -238,7 +451,7 @@ export function StudentForm({
             </Button>
             <Button
               onClick={() => {
-                if (credentials) router.push(`/portal/admin/students/${credentials.studentId}`);
+                if (credentials) router.push(doneHref ?? `/portal/admin/students/${credentials.studentId}`);
               }}
             >
               Done

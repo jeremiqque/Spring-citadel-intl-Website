@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { average, scoreToLetter } from "@/lib/grading";
@@ -101,6 +102,31 @@ export default async function StudentDashboardPage() {
   // fraction when subject selection is modelled.
   const submittedCount = myGrades.length;
 
+  // The OFFICIAL result, as distinct from everything above. The three stat
+  // tiles and the subject cards are a live, unofficial snapshot computed
+  // straight from SUBMITTED grades — useful the moment a teacher submits a
+  // subject, weeks before a term ends. termResult is the opposite: it only
+  // exists once an admin has compiled AND published it (see
+  // app/portal/(app)/admin/results), and only then does it carry things the
+  // live snapshot never has — a class position, and the class teacher's and
+  // principal's remarks. Fetched by (studentId, term, session) + status:
+  // "PUBLISHED" for the same reason myGrades filters on SUBMITTED — a
+  // compiled-but-not-yet-published result must stay exactly as invisible to
+  // the student as a draft grade is.
+  const termResult = await prisma.termResult.findUnique({
+    where: {
+      studentId_term_session: { studentId: student.id, term: currentTerm, session: currentSession },
+    },
+  });
+  const psychomotor =
+    termResult?.status === "PUBLISHED"
+      ? await prisma.psychomotorRating.findUnique({
+          where: {
+            studentId_term_session: { studentId: student.id, term: currentTerm, session: currentSession },
+          },
+        })
+      : null;
+
   return (
     <div className="space-y-8">
       <div>
@@ -109,6 +135,88 @@ export default async function StudentDashboardPage() {
           {student.admissionNo} — {student.class.name}
         </p>
       </div>
+
+      {termResult?.status === "PUBLISHED" && (
+        <section className="rounded-lg border border-border bg-muted/20 p-5">
+          <div className="flex items-start justify-between gap-4">
+            <h2 className="text-sm font-medium text-foreground">
+              Official result — {currentTerm.replace("_", " ")}
+            </h2>
+            {/* On-demand PDF — see app/api/portal/report-card/[termResultId] and
+                lib/report-card.tsx. Never pre-generated or stored: a plain
+                download link is all this needs, no client component. */}
+            <Button asChild variant="outline" size="sm">
+              <a href={`/api/portal/report-card/${termResult.id}`}>Download report card</a>
+            </Button>
+          </div>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <p className="text-xs text-muted-foreground">Average</p>
+              <p data-numeric className="mt-1 text-xl font-semibold text-foreground">
+                {termResult.average.toFixed(1)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Class position</p>
+              <p data-numeric className="mt-1 text-xl font-semibold text-foreground">
+                {termResult.position ? `${termResult.position} of ${termResult.classSize}` : "Not ranked"}
+              </p>
+            </div>
+            {termResult.attendanceTotal != null && (
+              <div>
+                <p className="text-xs text-muted-foreground">Attendance</p>
+                <p data-numeric className="mt-1 text-xl font-semibold text-foreground">
+                  {termResult.attendancePresent ?? 0}/{termResult.attendanceTotal}
+                </p>
+              </div>
+            )}
+            <div>
+              <p className="text-xs text-muted-foreground">Published</p>
+              <p className="mt-1 text-sm text-foreground">
+                {termResult.publishedAt?.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+              </p>
+            </div>
+          </div>
+
+          {psychomotor && (
+            <div className="mt-4 grid gap-2 border-t border-border pt-4 sm:grid-cols-4">
+              {(
+                [
+                  ["Punctuality", psychomotor.punctuality],
+                  ["Neatness", psychomotor.neatness],
+                  ["Honesty", psychomotor.honesty],
+                  ["Leadership", psychomotor.leadership],
+                  ["Cooperation", psychomotor.cooperation],
+                  ["Handwriting", psychomotor.handwriting],
+                  ["Sports", psychomotor.sports],
+                ] as const
+              ).map(([label, value]) => (
+                <div key={label} className="text-sm">
+                  <span className="text-muted-foreground">{label}: </span>
+                  <span className="font-medium text-foreground">{value}/5</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {(termResult.classTeacherRemark || termResult.principalRemark) && (
+            <div className="mt-4 space-y-1 border-t border-border pt-4 text-sm">
+              {termResult.classTeacherRemark && (
+                <p>
+                  <span className="text-muted-foreground">Class teacher: </span>
+                  {termResult.classTeacherRemark}
+                </p>
+              )}
+              {termResult.principalRemark && (
+                <p>
+                  <span className="text-muted-foreground">Principal: </span>
+                  {termResult.principalRemark}
+                </p>
+              )}
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-lg border border-border p-4">

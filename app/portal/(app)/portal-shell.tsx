@@ -22,6 +22,8 @@ import {
   Menu01Icon,
   Settings02Icon,
   ShieldUserIcon,
+  Award01Icon,
+  CalendarCheck01Icon,
 } from "@hugeicons/core-free-icons";
 import {
   DropdownMenu,
@@ -86,6 +88,9 @@ const NAV: Record<Role, NavSection[]> = {
       section: "ACADEMIC",
       items: [
         { label: "Grades", href: "/portal/admin/grades", icon: BarChartIcon },
+        { label: "Psychomotor", href: "/portal/admin/psychomotor", icon: TeacherIcon },
+        { label: "Results", href: "/portal/admin/results", icon: Award01Icon },
+        { label: "Attendance", href: "/portal/admin/attendance", icon: CalendarCheck01Icon },
         { label: "Classes", href: "/portal/admin/classes", icon: Book01Icon },
         { label: "Subjects", href: "/portal/admin/subjects", icon: PencilEdit01Icon },
       ],
@@ -118,6 +123,9 @@ const NAV: Record<Role, NavSection[]> = {
       items: [
         { label: "My Classes", href: "/portal/teacher/classes", icon: Book01Icon },
         { label: "Grade Entry", href: "/portal/teacher/grades", icon: PencilEdit01Icon },
+        { label: "Psychomotor", href: "/portal/teacher/psychomotor", icon: TeacherIcon },
+        { label: "Attendance", href: "/portal/teacher/attendance", icon: CalendarCheck01Icon },
+        { label: "Add Student", href: "/portal/teacher/students/new", icon: UserGroupIcon },
       ],
     },
     {

@@ -136,3 +136,74 @@ export async function teacherAssignments(teacherId: string) {
     orderBy: [{ class: { level: "asc" } }, { class: { name: "asc" } }, { subject: { name: "asc" } }],
   });
 }
+
+/**
+ * "Assigned to this class" for purposes that have nothing to do with
+ * grading — enrolling a new student, for one. Deliberately NOT filtered by
+ * gradingEnabled the way teacherAssignments()/requireAssignment() are: a
+ * teacher assigned to an Early Years or Primary class (no grading scheme
+ * yet) still teaches that class and still enrolls into it. Any subject
+ * counts — a teacher only needs to hold ONE TeacherAssignment row for the
+ * class, not one per subject.
+ */
+export async function requireClassAssignment(teacherId: string, classId: string) {
+  const assignment = await prisma.teacherAssignment.findFirst({
+    where: { teacherId, classId },
+    select: { class: { select: { id: true, name: true, code: true } } },
+  });
+
+  if (!assignment) {
+    throw new TeacherAuthError("You are not assigned to this class.");
+  }
+
+  return assignment.class;
+}
+
+/**
+ * Every class this teacher holds at least one assignment in, deduped —
+ * the class picker for the teacher's own "add student" form. Unfiltered by
+ * gradingEnabled for the same reason requireClassAssignment() is above.
+ */
+export async function teacherClasses(teacherId: string) {
+  const assignments = await prisma.teacherAssignment.findMany({
+    where: { teacherId },
+    select: { class: { select: { id: true, name: true, code: true, level: true } } },
+    distinct: ["classId"],
+    orderBy: [{ class: { level: "asc" } }, { class: { name: "asc" } }],
+  });
+  return assignments.map((a) => a.class);
+}
+
+/**
+ * "Is this teacher the form/class teacher of this class?" — the gate for
+ * psychomotor ratings (and, later, attendance and remarks). Distinct from
+ * requireClassAssignment(): that checks subject coverage (TeacherAssignment,
+ * many teachers per class), this checks ownership (Class.formTeacherId, at
+ * most one teacher per class). A teacher who teaches Math in a class is not
+ * automatically who rates that class's punctuality.
+ */
+export async function requireFormTeacher(teacherId: string, classId: string) {
+  const cls = await prisma.class.findUnique({
+    where: { id: classId },
+    select: { id: true, name: true, formTeacherId: true },
+  });
+
+  if (!cls || cls.formTeacherId !== teacherId) {
+    throw new TeacherAuthError("You are not the form teacher of this class.");
+  }
+
+  return cls;
+}
+
+/**
+ * The one class this teacher is form teacher of, or null. Powers the
+ * teacher-side psychomotor page — most teachers will get null and see an
+ * empty state, since form-teacher is a role assigned to one teacher per
+ * class, not every teacher.
+ */
+export async function formTeacherClass(teacherId: string) {
+  return prisma.class.findFirst({
+    where: { formTeacherId: teacherId },
+    select: { id: true, name: true, code: true, level: true },
+  });
+}

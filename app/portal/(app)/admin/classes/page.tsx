@@ -14,6 +14,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { ClassCoverage, type ClassAssignment } from "./class-coverage";
+import { FormTeacherPicker } from "./form-teacher-picker";
 
 const LEVEL_LABEL: Record<string, string> = {
   EARLY_YEARS: "Early Years",
@@ -184,13 +185,14 @@ export default async function AdminClassesPage() {
               <TableHead>At risk</TableHead>
               <TableHead>Teachers</TableHead>
               <TableHead>Subjects covered</TableHead>
+              <TableHead>Form teacher</TableHead>
               <TableHead>Grading</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {classes.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
+                <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
                   No classes have been set up yet. They are created by the seed script.
                 </TableCell>
               </TableRow>
@@ -206,7 +208,7 @@ export default async function AdminClassesPage() {
                   {showLevelHeader && (
                     <TableRow className="border-b-0 bg-muted/40 hover:bg-muted/40">
                       <TableCell
-                        colSpan={8}
+                        colSpan={9}
                         className="py-2 text-xs font-medium tracking-wide text-muted-foreground uppercase"
                       >
                         {LEVEL_LABEL[c.level] ?? c.level}
@@ -246,6 +248,13 @@ export default async function AdminClassesPage() {
                       />
                     </TableCell>
                     <TableCell>{subjects}</TableCell>
+                    <TableCell>
+                      <FormTeacherPicker
+                        classId={c.id}
+                        formTeacherId={c.formTeacherId}
+                        teachers={teacherOptions}
+                      />
+                    </TableCell>
                     <TableCell>
                       {c.gradingEnabled ? (
                         <Badge variant="success">Enabled</Badge>

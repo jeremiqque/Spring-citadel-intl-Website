@@ -18,7 +18,6 @@ import {
   TableBody,
   TableRow,
   TableHead,
-  TableCell,
 } from "@/components/ui/table";
 import { TeacherGradeRow } from "./teacher-grade-row";
 import { SubmitAllDrafts } from "./submit-all";

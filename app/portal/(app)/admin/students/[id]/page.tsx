@@ -109,6 +109,25 @@ export default async function StudentProfilePage({
     prisma.subject.findMany({ where: { levels: { has: student.class.level } }, select: { id: true } }),
   ]);
 
+  // The OFFICIAL, admin-facing counterpart to the student page's own
+  // "Official result" panel — same PUBLISHED-only visibility rule doesn't
+  // apply to an admin (they already see COMPILED results in
+  // admin/results), but the download link is only meaningful once a result
+  // is actually PUBLISHED, since that's the only status generateReportCardPdf()
+  // will render.
+  const termResult =
+    currentSessionSetting && currentTermSetting
+      ? await prisma.termResult.findUnique({
+          where: {
+            studentId_term_session: {
+              studentId: id,
+              term: currentTermSetting.value as "TERM_1" | "TERM_2" | "TERM_3",
+              session: currentSessionSetting.value,
+            },
+          },
+        })
+      : null;
+
   const currentAverage = average(currentGrades.map((g) => g.total));
   const gradingConfig = await getGradingConfig();
   const currentLetter =
@@ -236,6 +255,25 @@ export default async function StudentProfilePage({
           <InfoRow icon={Location01Icon} label="Address" value={student.address} />
         </InfoCard>
       </section>
+
+      {termResult?.status === "PUBLISHED" && (
+        <section className="rounded-lg border border-border bg-muted/20 p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-sm font-medium text-foreground">
+                Published result — {termResult.term.replace("_", " ")}, {termResult.session}
+              </h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Average {termResult.average.toFixed(1)} ·{" "}
+                {termResult.position ? `${termResult.position} of ${termResult.classSize}` : "Not ranked"}
+              </p>
+            </div>
+            <Button asChild variant="outline" size="sm">
+              <a href={`/api/portal/report-card/${termResult.id}`}>Download report card</a>
+            </Button>
+          </div>
+        </section>
+      )}
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium text-foreground">Grade history</h2>

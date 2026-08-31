@@ -7,9 +7,10 @@ import { prisma } from "@/lib/prisma";
 import { BCRYPT_COST } from "@/lib/password";
 import { nextAdmissionNo } from "@/lib/ids";
 import { generateTempPassword } from "@/lib/temp-password";
-import { studentFormSchema, type StudentFormValues } from "@/lib/validation/student";
+import { studentFormSchema, blankToUndefined, type StudentFormValues } from "@/lib/validation/student";
 import { idSchema } from "@/lib/validation/id";
 import { notifyAdmins } from "@/lib/notify";
+import { requireTeacher, requireClassAssignment, TeacherAuthError } from "@/lib/teacher";
 
 // Defense in depth, not the real gate: middleware's authorized() callback
 // already keeps a TEACHER or STUDENT session from ever reaching a page that
@@ -23,18 +24,47 @@ async function requireAdmin() {
   }
 }
 
+// Enrollment only. A teacher may enroll a student into a class they hold a
+// TeacherAssignment for — nothing else about student records opens up to
+// them (edit, delete and password-reset below all still call
+// requireAdmin()). Throws TeacherAuthError for a legitimate teacher hitting
+// a class they don't hold — that message is safe to show them. Any other
+// role throws a plain Error, same "should never happen past middleware"
+// defense-in-depth as requireAdmin() above, and is left uncaught.
+async function requireStudentCreateAccess(classId: string) {
+  const session = await auth();
+  const role = session?.user?.role;
+
+  if (role === "ADMIN") return;
+
+  if (role === "TEACHER") {
+    const { teacherId } = await requireTeacher();
+    await requireClassAssignment(teacherId, classId);
+    return;
+  }
+
+  throw new Error("Forbidden");
+}
+
 export type CreateStudentResult =
   | { ok: true; studentId: string; admissionNo: string; tempPassword: string }
   | { ok: false; error: string };
 
 export async function createStudentAction(values: StudentFormValues): Promise<CreateStudentResult> {
-  await requireAdmin();
-
   const parsed = studentFormSchema.safeParse(values);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
   const data = parsed.data;
+
+  try {
+    await requireStudentCreateAccess(data.classId);
+  } catch (err) {
+    if (err instanceof TeacherAuthError) {
+      return { ok: false, error: err.message };
+    }
+    throw err;
+  }
 
   const cls = await prisma.class.findUnique({ where: { id: data.classId } });
   if (!cls) {
@@ -77,6 +107,38 @@ export async function createStudentAction(values: StudentFormValues): Promise<Cr
           guardianName: data.guardianName,
           guardianPhone: data.guardianPhone,
           address: data.address,
+
+          nationality: blankToUndefined(data.nationality),
+          motherTongue: blankToUndefined(data.motherTongue),
+          placeOfBirth: blankToUndefined(data.placeOfBirth),
+          previousSchool: blankToUndefined(data.previousSchool),
+
+          sibling1Name: blankToUndefined(data.sibling1Name),
+          sibling1Class: blankToUndefined(data.sibling1Class),
+          sibling2Name: blankToUndefined(data.sibling2Name),
+          sibling2Class: blankToUndefined(data.sibling2Class),
+          sibling3Name: blankToUndefined(data.sibling3Name),
+          sibling3Class: blankToUndefined(data.sibling3Class),
+
+          fatherName: blankToUndefined(data.fatherName),
+          fatherNationality: blankToUndefined(data.fatherNationality),
+          fatherState: blankToUndefined(data.fatherState),
+          fatherProfession: blankToUndefined(data.fatherProfession),
+          fatherEmployer: blankToUndefined(data.fatherEmployer),
+          fatherPoBox: blankToUndefined(data.fatherPoBox),
+          fatherAddress: blankToUndefined(data.fatherAddress),
+          fatherPhone: blankToUndefined(data.fatherPhone),
+          fatherEmail: blankToUndefined(data.fatherEmail),
+
+          motherName: blankToUndefined(data.motherName),
+          motherNationality: blankToUndefined(data.motherNationality),
+          motherState: blankToUndefined(data.motherState),
+          motherProfession: blankToUndefined(data.motherProfession),
+          motherEmployer: blankToUndefined(data.motherEmployer),
+          motherPoBox: blankToUndefined(data.motherPoBox),
+          motherAddress: blankToUndefined(data.motherAddress),
+          motherPhone: blankToUndefined(data.motherPhone),
+          motherEmail: blankToUndefined(data.motherEmail),
         },
       });
 
@@ -155,6 +217,38 @@ export async function updateStudentAction(
           guardianName: data.guardianName,
           guardianPhone: data.guardianPhone,
           address: data.address,
+
+          nationality: blankToUndefined(data.nationality) ?? null,
+          motherTongue: blankToUndefined(data.motherTongue) ?? null,
+          placeOfBirth: blankToUndefined(data.placeOfBirth) ?? null,
+          previousSchool: blankToUndefined(data.previousSchool) ?? null,
+
+          sibling1Name: blankToUndefined(data.sibling1Name) ?? null,
+          sibling1Class: blankToUndefined(data.sibling1Class) ?? null,
+          sibling2Name: blankToUndefined(data.sibling2Name) ?? null,
+          sibling2Class: blankToUndefined(data.sibling2Class) ?? null,
+          sibling3Name: blankToUndefined(data.sibling3Name) ?? null,
+          sibling3Class: blankToUndefined(data.sibling3Class) ?? null,
+
+          fatherName: blankToUndefined(data.fatherName) ?? null,
+          fatherNationality: blankToUndefined(data.fatherNationality) ?? null,
+          fatherState: blankToUndefined(data.fatherState) ?? null,
+          fatherProfession: blankToUndefined(data.fatherProfession) ?? null,
+          fatherEmployer: blankToUndefined(data.fatherEmployer) ?? null,
+          fatherPoBox: blankToUndefined(data.fatherPoBox) ?? null,
+          fatherAddress: blankToUndefined(data.fatherAddress) ?? null,
+          fatherPhone: blankToUndefined(data.fatherPhone) ?? null,
+          fatherEmail: blankToUndefined(data.fatherEmail) ?? null,
+
+          motherName: blankToUndefined(data.motherName) ?? null,
+          motherNationality: blankToUndefined(data.motherNationality) ?? null,
+          motherState: blankToUndefined(data.motherState) ?? null,
+          motherProfession: blankToUndefined(data.motherProfession) ?? null,
+          motherEmployer: blankToUndefined(data.motherEmployer) ?? null,
+          motherPoBox: blankToUndefined(data.motherPoBox) ?? null,
+          motherAddress: blankToUndefined(data.motherAddress) ?? null,
+          motherPhone: blankToUndefined(data.motherPhone) ?? null,
+          motherEmail: blankToUndefined(data.motherEmail) ?? null,
         },
       }),
     ]);

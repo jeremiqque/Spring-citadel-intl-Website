@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { PUBLIC_USER } from "@/lib/user-select";
+import { avatarUrl } from "@/lib/avatar";
 import { StudentForm } from "../../student-form";
 import { BackLink } from "@/components/ui/back-link";
 
@@ -30,6 +31,7 @@ export default async function EditStudentPage({
           mode="edit"
           studentId={student.id}
           classes={classes}
+          currentPhotoUrl={avatarUrl(student.user.id, student.user.avatarUpdatedAt)}
           defaultValues={{
             name: student.user.name,
             dob: student.dob.toISOString().slice(0, 10),

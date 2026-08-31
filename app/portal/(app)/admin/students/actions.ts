@@ -8,6 +8,7 @@ import { BCRYPT_COST } from "@/lib/password";
 import { nextAdmissionNo } from "@/lib/ids";
 import { generateTempPassword } from "@/lib/temp-password";
 import { studentFormSchema, blankToUndefined, type StudentFormValues } from "@/lib/validation/student";
+import { decodeAvatarUpload } from "@/lib/avatar";
 import { idSchema } from "@/lib/validation/id";
 import { notifyAdmins } from "@/lib/notify";
 import { requireTeacher, requireClassAssignment, TeacherAuthError } from "@/lib/teacher";
@@ -71,6 +72,15 @@ export async function createStudentAction(values: StudentFormValues): Promise<Cr
     return { ok: false, error: "Selected class no longer exists." };
   }
 
+  let avatarFields: { avatar: Uint8Array<ArrayBuffer>; avatarType: string; avatarUpdatedAt: Date } | undefined;
+  if (data.photo) {
+    const decoded = decodeAvatarUpload(data.photo);
+    if (!decoded.ok) {
+      return { ok: false, error: decoded.error };
+    }
+    avatarFields = { avatar: new Uint8Array(decoded.bytes), avatarType: "image/jpeg", avatarUpdatedAt: new Date() };
+  }
+
   const tempPassword = generateTempPassword();
   const hash = await bcrypt.hash(tempPassword, BCRYPT_COST);
 
@@ -94,6 +104,7 @@ export async function createStudentAction(values: StudentFormValues): Promise<Cr
           password: hash,
           role: "STUDENT",
           mustChangePassword: true,
+          ...avatarFields,
         },
       });
 
@@ -202,11 +213,25 @@ export async function updateStudentAction(
     return { ok: false, error: "Student not found." };
   }
 
+  // Same shape as createStudentAction: decoded and validated BEFORE the
+  // transaction, so a bad photo blocks the whole save rather than silently
+  // going through without it. Absent entirely (not just falsy) when no new
+  // photo was staged this submission, so the spread below leaves the
+  // existing avatar columns untouched instead of overwriting them.
+  let avatarUpdate: { avatar: Uint8Array<ArrayBuffer>; avatarType: string; avatarUpdatedAt: Date } | undefined;
+  if (data.photo) {
+    const decoded = decodeAvatarUpload(data.photo);
+    if (!decoded.ok) {
+      return { ok: false, error: decoded.error };
+    }
+    avatarUpdate = { avatar: new Uint8Array(decoded.bytes), avatarType: "image/jpeg", avatarUpdatedAt: new Date() };
+  }
+
   try {
     await prisma.$transaction([
       prisma.user.update({
         where: { id: existing.userId },
-        data: { name: data.name },
+        data: { name: data.name, ...avatarUpdate },
       }),
       prisma.student.update({
         where: { id: studentId },

@@ -59,6 +59,13 @@ export const studentFormSchema = z.object({
   motherAddress: optionalText(),
   motherPhone: optionalText(),
   motherEmail: z.union([z.literal(""), z.string().trim().email("Enter a valid email")]).optional(),
+
+  // The enrolment passport photograph — a data: URL staged client-side by
+  // StudentPhotoPicker (see admin/students/student-photo-picker.tsx), decoded
+  // and validated for real server-side by lib/avatar.ts's decodeAvatarUpload
+  // before anything is written. Optional, same as the rest of this form: the
+  // office may take the photo later rather than at enrolment.
+  photo: z.string().optional(),
 });
 
 // Converts "" (what an empty text input posts) to undefined so

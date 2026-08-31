@@ -4,13 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
-import {
-  AVATAR_ACCEPT,
-  AVATAR_MAX_UPLOAD_BYTES,
-  AVATAR_OUTPUT_TYPE,
-  AVATAR_QUALITY,
-  AVATAR_SIZE,
-} from "@/lib/avatar";
+import { AVATAR_ACCEPT, AVATAR_MAX_UPLOAD_BYTES, AVATAR_SIZE, cropToSquareJpeg } from "@/lib/avatar";
 import { updateAvatarAction, removeAvatarAction } from "./actions";
 
 /**
@@ -57,45 +51,6 @@ export function AvatarUploader({
   const shown = preview ?? initialSrc;
   const hasPhoto = Boolean(shown);
 
-  /**
-   * Centre-crop to a square, then draw down to AVATAR_SIZE.
-   *
-   * Centre-crop rather than letterbox: a face is almost always in the middle
-   * of a portrait, and padding a rectangle into a circle produces a tiny head
-   * with grey bars either side. `createImageBitmap(..., "from-image")` honours
-   * the EXIF orientation flag, which is what stops a photo taken in portrait
-   * from arriving on its side — the classic version of this bug.
-   */
-  async function toSquareJpeg(file: File): Promise<string> {
-    let bitmap: ImageBitmap;
-    try {
-      bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-    } catch {
-      // Safari and older browsers without the options bag.
-      bitmap = await createImageBitmap(file);
-    }
-
-    const edge = Math.min(bitmap.width, bitmap.height);
-    const sx = (bitmap.width - edge) / 2;
-    const sy = (bitmap.height - edge) / 2;
-
-    const canvas = document.createElement("canvas");
-    canvas.width = AVATAR_SIZE;
-    canvas.height = AVATAR_SIZE;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("no-canvas");
-
-    // A JPEG has no alpha channel, so a PNG with a transparent background
-    // would otherwise composite onto black. Paint white first.
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, AVATAR_SIZE, AVATAR_SIZE);
-    ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(bitmap, sx, sy, edge, edge, 0, 0, AVATAR_SIZE, AVATAR_SIZE);
-    bitmap.close?.();
-
-    return canvas.toDataURL(AVATAR_OUTPUT_TYPE, AVATAR_QUALITY);
-  }
-
   async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     // Reset the input immediately: without this, picking the SAME file twice
@@ -118,7 +73,7 @@ export function AvatarUploader({
     setBusy(true);
     let dataUrl: string;
     try {
-      dataUrl = await toSquareJpeg(file);
+      dataUrl = await cropToSquareJpeg(file);
     } catch {
       setBusy(false);
       setError("That image could not be read. Try a different photo.");

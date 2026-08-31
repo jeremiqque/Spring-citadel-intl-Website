@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { auth, unstable_update } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { BCRYPT_COST } from "@/lib/password";
-import { AVATAR_MAX_BYTES } from "@/lib/avatar";
+import { decodeAvatarUpload } from "@/lib/avatar";
 import {
   staffProfileSchema,
   studentProfileSchema,
@@ -198,45 +198,20 @@ export async function changePasswordAction(values: PasswordChangeValues): Promis
  * only one.
  */
 
-// FF D8 FF — the SOI marker every JPEG begins with.
-function isJpeg(bytes: Buffer): boolean {
-  return bytes.length > 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-}
-
 /** Set the signed-in user's own picture. Any role. */
 export async function updateAvatarAction(base64: string): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user?.id) return { ok: false, error: "Your session has expired. Please sign in again." };
 
-  // Accept either a bare base64 payload or a full data: URL, and take only
-  // the part after the comma. Doing this here rather than assuming a shape
-  // means a caller that sends the whole data URL is handled, not corrupted.
-  const payload = base64.includes(",") ? base64.slice(base64.indexOf(",") + 1) : base64;
-
-  let bytes: Buffer;
-  try {
-    bytes = Buffer.from(payload, "base64");
-  } catch {
-    return { ok: false, error: "That image could not be read. Try a different photo." };
-  }
-
-  if (bytes.length === 0) {
-    return { ok: false, error: "That image could not be read. Try a different photo." };
-  }
-  if (bytes.length > AVATAR_MAX_BYTES) {
-    return { ok: false, error: "That image is too large. Try a smaller photo." };
-  }
-  if (!isJpeg(bytes)) {
-    // Deliberately vague to the user and precise in intent: a legitimate
-    // upload cannot reach this branch, because the uploader always re-encodes
-    // to JPEG. Anything here was hand-crafted.
-    return { ok: false, error: "That file isn't a supported image." };
+  const decoded = decodeAvatarUpload(base64);
+  if (!decoded.ok) {
+    return { ok: false, error: decoded.error };
   }
 
   await prisma.user.update({
     where: { id: session.user.id },
     data: {
-      avatar: new Uint8Array(bytes),
+      avatar: new Uint8Array(decoded.bytes),
       avatarType: "image/jpeg",
       avatarUpdatedAt: new Date(),
     },

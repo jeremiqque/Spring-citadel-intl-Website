@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { studentFormSchema, type StudentFormValues } from "@/lib/validation/student";
 import { createStudentAction, updateStudentAction } from "./actions";
+import { StudentPhotoPicker } from "./student-photo-picker";
 
 type ClassOption = { id: string; name: string; code: string };
 
@@ -29,12 +30,17 @@ export function StudentForm({
   studentId,
   classes,
   defaultValues,
+  currentPhotoUrl,
   doneHref,
 }: {
   mode: "create" | "edit";
   studentId?: string;
   classes: ClassOption[];
   defaultValues?: Partial<StudentFormValues>;
+  // The already-saved photo's URL — edit mode only. Absent (or null) in
+  // create mode, since a not-yet-created student has no id for the avatar
+  // route to serve from yet.
+  currentPhotoUrl?: string | null;
   // Where "Done" on the post-enroll credentials dialog goes. Admin's own
   // enroll page leaves this unset and falls back to the student's admin
   // profile page, as before. The teacher enroll page passes its own
@@ -97,11 +103,14 @@ export function StudentForm({
       motherAddress: defaultValues?.motherAddress ?? "",
       motherPhone: defaultValues?.motherPhone ?? "",
       motherEmail: defaultValues?.motherEmail ?? "",
+
+      photo: undefined,
     },
   });
 
   const gender = watch("gender");
   const classId = watch("classId");
+  const photo = watch("photo");
 
   const onSubmit = (values: StudentFormValues) => {
     setFormError(null);
@@ -148,6 +157,13 @@ export function StudentForm({
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="max-w-2xl space-y-8">
         <div className="space-y-5">
           <h2 className="text-sm font-medium text-foreground">Student details</h2>
+
+          <StudentPhotoPicker
+            value={photo}
+            onChange={(dataUrl) => setValue("photo", dataUrl, { shouldValidate: true })}
+            currentPhotoUrl={currentPhotoUrl}
+            name={watch("name")}
+          />
 
           <div>
             <Label htmlFor="name">Full name</Label>

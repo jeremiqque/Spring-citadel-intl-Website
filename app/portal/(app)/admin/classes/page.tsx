@@ -13,8 +13,11 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { ClassCoverage, type ClassAssignment } from "./class-coverage";
 import { FormTeacherPicker } from "./form-teacher-picker";
+import { ClassForm } from "./class-form";
+import { ClassDeleteButton } from "./class-delete-button";
 
 const LEVEL_LABEL: Record<string, string> = {
   EARLY_YEARS: "Early Years",
@@ -24,31 +27,34 @@ const LEVEL_LABEL: Record<string, string> = {
 };
 
 /**
- * Classes — read-only.
+ * Classes — add and delete are admin tasks now; editing an existing class
+ * still is not, and never will be through this form.
  *
- * ── WHY READ-ONLY, AND WHY THAT IS NOT A PLACEHOLDER ──────────────────────
+ * ── WHY EDITING STAYS OUT, EVEN THOUGH ADD/DELETE ARE IN ─────────────────
  * `Class.code` feeds the admission number ("SCIS/2026/JSS3/001", see
  * lib/ids.ts), and admission numbers go on paper records the school keeps for
- * years. An edit form over this table would let one mistyped code silently
- * change the number every subsequent student in that class is issued, with no
- * relationship to the numbers already printed on the admission letters of the
- * children sitting in the same room.
+ * years. An edit form over an EXISTING class would let one mistyped code
+ * silently change the number every subsequent student in that class is
+ * issued, with no relationship to the numbers already printed on the
+ * admission letters of the children sitting in the same room. Creating a NEW
+ * class doesn't have that problem — there's no history yet to contradict —
+ * so ClassForm (see class-form.tsx) covers that, and deleteClassAction (see
+ * actions.ts) refuses the moment a class has any student, grade, attendance
+ * mark, psychomotor rating or term result on file, which is what makes
+ * "delete and re-add" a safe way to fix a mistake made before anyone was
+ * enrolled.
  *
- * `gradingEnabled` is the other trap: turning it on for Primary would offer
- * teachers a 20/30/50 marking sheet for a level the school has no agreed
- * assessment scheme for. The seed derives it from the level for that reason.
+ * `gradingEnabled` is the other trap ClassForm closes off rather than opens
+ * up: it is derived from the level chosen (see gradingEnabledForLevel), not
+ * offered as a free toggle — turning it on for Primary would hand teachers a
+ * 20/30/50 marking sheet for a level the school has no agreed assessment
+ * scheme for.
  *
- * So this screen exists to answer "what classes are there, how full are they,
- * and who teaches them" — which is what an admin actually opens it for.
- * Structural changes stay in prisma/seed.ts, where they get a code review and
- * a deploy, which is the correct amount of ceremony for a decision this
- * expensive to reverse.
- *
- * "Who teaches them" is not read-only, though: the Teachers column used to
- * be a bare count with nowhere to go. ClassCoverage opens the actual
- * teacher/subject pairs for that class and can add or remove one right
- * there — the same addAssignmentAction/removeAssignmentAction the teacher
- * profile and the Subjects page both call.
+ * "Who teaches them" was already not read-only: the Teachers column opens
+ * the actual teacher/subject pairs for that class via ClassCoverage, and can
+ * add or remove one right there — the same addAssignmentAction/
+ * removeAssignmentAction the teacher profile and the Subjects page both
+ * call.
  *
  * Query shape: five grouped queries total, not one per class.
  */
@@ -116,11 +122,14 @@ export default async function AdminClassesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Classes</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {classes.length} classes · {totalStudents} enrolled students
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Classes</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {classes.length} classes · {totalStudents} enrolled students
+          </p>
+        </div>
+        <ClassForm trigger={<Button size="sm">Add class</Button>} />
       </div>
 
       {/* Same icon-chip KPI card the dashboard and student profile already
@@ -187,13 +196,14 @@ export default async function AdminClassesPage() {
               <TableHead>Subjects covered</TableHead>
               <TableHead>Form teacher</TableHead>
               <TableHead>Grading</TableHead>
+              <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {classes.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
-                  No classes have been set up yet. They are created by the seed script.
+                <TableCell colSpan={10} className="py-8 text-center text-muted-foreground">
+                  No classes yet. Add the first one to get started.
                 </TableCell>
               </TableRow>
             )}
@@ -208,7 +218,7 @@ export default async function AdminClassesPage() {
                   {showLevelHeader && (
                     <TableRow className="border-b-0 bg-muted/40 hover:bg-muted/40">
                       <TableCell
-                        colSpan={9}
+                        colSpan={10}
                         className="py-2 text-xs font-medium tracking-wide text-muted-foreground uppercase"
                       >
                         {LEVEL_LABEL[c.level] ?? c.level}
@@ -262,6 +272,9 @@ export default async function AdminClassesPage() {
                         <Badge variant="outline">Not graded</Badge>
                       )}
                     </TableCell>
+                    <TableCell>
+                      <ClassDeleteButton classId={c.id} className={c.name} />
+                    </TableCell>
                   </TableRow>
                 </React.Fragment>
               );
@@ -271,13 +284,13 @@ export default async function AdminClassesPage() {
       </div>
 
       <p className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-        The classes themselves are read-only here on purpose. A class code feeds every
-        admission number issued to that class (
-        <span className="font-mono">SCIS/2026/JSS3/001</span>), and those numbers go on
-        paper records the school keeps for years — changing one after students are enrolled
-        would leave their printed numbers pointing at nothing. Adding or renaming a class is
-        a change to the seed script. Who teaches a class is not read-only — open a class's
-        teacher count to see or change its coverage.
+        A class&apos;s code and level can&apos;t be changed after it&apos;s added — the code feeds
+        every admission number issued to that class (
+        <span className="font-mono">SCIS/2026/JSS3/001</span>), and those numbers go on paper
+        records the school keeps for years. Delete only works before anyone has been enrolled
+        into it, so fixing a mistake means deleting and re-adding rather than editing. Who
+        teaches a class is different — open a class&apos;s teacher count to see or change its
+        coverage.
       </p>
     </div>
   );

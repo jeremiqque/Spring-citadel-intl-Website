@@ -90,6 +90,17 @@ enum GradeStatus {
   SUBMITTED
 }
 
+// Phase 4. LATE and EXCUSED both count differently from a plain ABSENT when
+// compileClassResults() rolls a term's Attendance rows into
+// TermResult.attendancePresent/attendanceTotal — see that function's
+// comment for exactly how each status is treated.
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
 enum NotificationType {
   STUDENT_ENROLLED
   GRADES_SUBMITTED
@@ -101,6 +112,13 @@ enum NotificationType {
   // initial, assume the upload had failed, and try again — and nobody would
   // ever learn that a member of staff had made a decision about it.
   PROFILE_PHOTO_REMOVED
+
+  // FR-style: a student's termly result was published — the one
+  // notification event Phase 2 raises, replacing the per-input noise
+  // (subject submitted, psychomotor submitted) that already exists on
+  // GRADES_SUBMITTED with a single "your result is ready" once everything
+  // feeding it has been compiled and an admin has published it.
+  RESULT_PUBLISHED
 }
 
 // ─── Identity ───────────────────────────────────────────────────────────────
@@ -179,11 +197,27 @@ model Class {
   // the school confirms Primary uses the same scheme.
   gradingEnabled Boolean @default(false)
 
+  // The class's ONE form/class teacher — distinct from TeacherAssignment,
+  // which is per (teacher, class, SUBJECT) and can hold several teachers per
+  // class with no single owner. This is who owns psychomotor ratings,
+  // attendance and remarks for the class (see PsychomotorRating.ratedById
+  // and requireFormTeacher() in lib/teacher.ts). @unique on the FK, not just
+  // the relation, because a teacher is form teacher of at most one class —
+  // this is what makes that a database constraint, not just a UI rule an
+  // admin could bypass by hitting the action twice from two tabs.
+  // Nullable: a newly-seeded class has no form teacher until an admin
+  // assigns one, and grade entry / enrolment must keep working regardless.
+  formTeacherId String?  @unique
+  formTeacher   Teacher? @relation("ClassFormTeacher", fields: [formTeacherId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
 
   students    Student[]
   assignments TeacherAssignment[]
   grades      Grade[]
+  psychomotorRatings PsychomotorRating[]
+  termResults TermResult[]
+  attendances Attendance[]
 
   @@index([level])
 }
@@ -235,6 +269,51 @@ model Student {
   guardianPhone String
   address       String
 
+  // ─── Admission-form fields ──────────────────────────────────────────────
+  // Captured on the paper "Application for Admission" form alongside the
+  // fields above but not previously stored anywhere. All optional: every
+  // student enrolled before this was added has none of it, and the office
+  // may not always have every field in hand at enrolment time either.
+  nationality    String?
+  motherTongue   String?
+  placeOfBirth   String?
+  previousSchool String?
+
+  // Up to three siblings currently studying at the school, as free-text
+  // name + class — matches the three fixed rows on the paper form exactly.
+  // A relation table would be the "correct" shape for an unbounded list, but
+  // the form only ever asks for three, and free-text class avoids a second
+  // foreign key to a Class row a sibling's class name might not still match.
+  sibling1Name  String?
+  sibling1Class String?
+  sibling2Name  String?
+  sibling2Class String?
+  sibling3Name  String?
+  sibling3Class String?
+
+  // Father's and mother's details, as the admission form's two matching
+  // columns. Distinct from guardianName/guardianPhone above, which is the
+  // one contact the rest of the app (notifications, the office's "who do we
+  // call") reads — the office picks which parent that field points to.
+  fatherName         String?
+  fatherNationality  String?
+  fatherState        String?
+  fatherProfession   String?
+  fatherEmployer     String?
+  fatherPoBox        String?
+  fatherAddress      String?
+  fatherPhone        String?
+  fatherEmail        String?
+  motherName         String?
+  motherNationality  String?
+  motherState        String?
+  motherProfession   String?
+  motherEmployer     String?
+  motherPoBox        String?
+  motherAddress      String?
+  motherPhone        String?
+  motherEmail        String?
+
   // The ONE field on this row a student may write themselves — a number the
   // school can reach THEM on, distinct from guardianPhone.
   //
@@ -254,6 +333,9 @@ model Student {
   updatedAt DateTime @updatedAt
 
   grades Grade[]
+  psychomotorRatings PsychomotorRating[]
+  termResults TermResult[]
+  attendances Attendance[]
 
   // [classId] alone was a strict leftmost prefix of [classId, status] and
   // bought nothing.
@@ -285,6 +367,15 @@ model Teacher {
 
   assignments TeacherAssignment[]
   grades      Grade[]
+  psychomotorRatings PsychomotorRating[]
+  attendancesMarked  Attendance[]
+
+  // The one class this teacher is form/class teacher of, if any — the other
+  // side of Class.formTeacherId. Named to match that field's relation name;
+  // a plain "class" name here would collide with nothing today but reads
+  // ambiguously next to TeacherAssignment.class, which is a totally
+  // different relationship (subject coverage, not ownership).
+  formClass Class? @relation("ClassFormTeacher")
 
   @@index([status])
   @@index([primarySubjectId])
@@ -384,6 +475,180 @@ model Grade {
   // The teacher profile counts submissions per (class, subject) for one
   // teacher, once per assignment.
   @@index([classId, subjectId, teacherId, status])
+}
+
+// One row per student per term: the affective/psychomotor domain, separate
+// from academic subject grades in Grade above. Owned by the class's form
+// teacher (Class.formTeacherId), not by whichever subject teacher happens to
+// be looking — see requireFormTeacher() in lib/teacher.ts. Reuses
+// GradeStatus (DRAFT/SUBMITTED) rather than inventing a parallel enum: the
+// draft/submit/visibility lifecycle is identical to Grade's, including "a
+// student never sees a DRAFT row."
+model PsychomotorRating {
+  id String @id @default(uuid())
+
+  studentId String
+  // Restrict, not Cascade — same reasoning as Grade.student: a student's
+  // psychomotor history is part of their permanent record and must survive
+  // whatever happens to the User row upstream of it.
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+
+  // Denormalised from Student, same reason Grade.classId is: filters the
+  // admin override list without a join, and a mid-term class change doesn't
+  // silently rewrite which class a rating "belongs" to.
+  classId String
+  class   Class  @relation(fields: [classId], references: [id], onDelete: Restrict)
+
+  term    Term
+  session String // "2026/2027"
+
+  // Standard Nigerian affective/psychomotor set, 1-5. A generic
+  // trait+rating child table would let the list vary without a migration —
+  // not worth it unless the rubric turns out to differ by level; start with
+  // fixed columns, matching how Grade's three score components are modelled.
+  punctuality Int
+  neatness    Int
+  honesty     Int
+  leadership  Int
+  cooperation Int
+  handwriting Int
+  sports      Int
+
+  remark String? // the form teacher's free-text comment
+
+  // Restrict, not Cascade, same reasoning as Grade.teacher: removing a
+  // teacher must never delete a child's records. Named ratedBy rather than
+  // teacher for readability at call sites once a report card is pulling
+  // together Grade.teacher, PsychomotorRating.ratedBy and
+  // TermResult.compiledBy in the same query.
+  ratedById String
+  ratedBy   Teacher @relation(fields: [ratedById], references: [id], onDelete: Restrict)
+
+  status      GradeStatus @default(DRAFT)
+  submittedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // One rating per student per term per session — the same shape as Grade's
+  // unique constraint, one level up (whole term, not per-subject).
+  @@unique([studentId, term, session])
+  @@index([classId, term, session])
+}
+
+enum ResultStatus {
+  DRAFT
+  COMPILED
+  PUBLISHED
+}
+
+// One row per student per term: the compiled result — everything Grade and
+// PsychomotorRating fed in, brought together, ranked, and (eventually)
+// published. This is what "the admin generates the result" means in
+// practice: nothing here is entered directly, it's computed by
+// compileClassResults() in lib/term-result.ts from rows that already exist,
+// then reviewed and published by an admin.
+model TermResult {
+  id String @id @default(uuid())
+
+  studentId String
+  // Restrict, not Cascade — same reasoning as every other student-record
+  // relation in this schema: a compiled result is part of the permanent
+  // record and must survive whatever happens to the User row upstream.
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+
+  classId String
+  class   Class  @relation(fields: [classId], references: [id], onDelete: Restrict)
+
+  term    Term
+  session String
+
+  totalScore Int   // sum of Grade.total across the student's subjects, at compile time
+  average    Float
+
+  // Null until compiled, and — by the school's own decision — permanently
+  // null for SS classes: subject streams (Science/Arts/Commercial) mean an
+  // SS class's students don't all sit the same subjects, so a single class
+  // rank isn't a meaningful comparison there. compileClassResults() simply
+  // never sets these two for an SS class; JSS/Primary/Early Years get both.
+  position  Int?
+  classSize Int?   // denormalised at compile time, so an old rank stays meaningful
+                    // even after later enrolment/withdrawal changes classSize
+
+  // Filled by Phase 4 (attendance) — nullable until that ships, additive
+  // when it does.
+  attendancePresent Int?
+  attendanceTotal   Int?
+
+  classTeacherRemark String?
+  principalRemark    String?
+
+  status       ResultStatus @default(DRAFT)
+  compiledAt   DateTime?
+  compiledById String?
+  publishedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, term, session])
+  @@index([classId, term, session, status])
+}
+
+// Phase 4 — daily attendance. Whole-day-per-student, marked once by the
+// class's form teacher (decision #5 in the plan, settled: "class teacher
+// marks the student attendance" — the per-period alternative the plan
+// sketched, one register per subject teacher per period, was explicitly not
+// chosen).
+//
+// `date` is the calendar day being marked, `term`/`session` are denormalised
+// from whatever the school's current-period Setting says AT THE MOMENT OF
+// MARKING — same pattern Grade.classId and PsychomotorRating.classId already
+// use for their denormalised fields, extended here to a term/session pair
+// because Attendance has no other way to know which term a date belongs to
+// (there is no school-calendar/term-date-range concept anywhere in this
+// schema). This means attendance should be marked close to the day it
+// covers, same expectation the rest of this app already carries for grades
+// and psychomotor entry against the "current" period.
+//
+// @@unique on (studentId, date), not (studentId, term, session, date): a
+// student cannot be marked twice for the same physical day, full stop,
+// regardless of which term Setting happened to be active either time.
+model Attendance {
+  id String @id @default(uuid())
+
+  studentId String
+  // Restrict, not Cascade — same reasoning as every other student-record
+  // relation in this schema: attendance is part of the permanent record and
+  // must survive whatever happens to the User row upstream.
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+
+  // Denormalised from Student, same reason Grade.classId is: lets the
+  // admin's register/summary views filter without a join, and a mid-term
+  // class change doesn't silently rewrite which class a past day's mark
+  // "belongs" to.
+  classId String
+  class   Class  @relation(fields: [classId], references: [id], onDelete: Restrict)
+
+  term    Term
+  session String // "2026/2027"
+
+  date DateTime @db.Date
+
+  status AttendanceStatus
+
+  // Restrict, not Cascade, same reasoning as Grade.teacher and
+  // PsychomotorRating.ratedBy: removing a teacher must never delete a
+  // child's records.
+  markedById String
+  markedBy   Teacher @relation(fields: [markedById], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, date])
+  @@index([classId, date])
+  @@index([studentId, term, session])
 }
 
 // ─── Notifications ──────────────────────────────────────────────────────────

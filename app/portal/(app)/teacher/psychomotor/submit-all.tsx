@@ -21,12 +21,14 @@ export function SubmitAllPsychomotorDrafts({
   session,
   draftCount,
   className,
+  isCurrentTerm,
 }: {
   classId: string;
   term: TermValue;
   session: string;
   draftCount: number;
   className: string;
+  isCurrentTerm: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -57,8 +59,14 @@ export function SubmitAllPsychomotorDrafts({
       <Button
         size="field"
         onClick={() => setOpen(true)}
-        disabled={isPending || draftCount === 0 || session.trim() === ""}
-        title={draftCount === 0 ? "No saved drafts to submit" : undefined}
+        disabled={isPending || draftCount === 0 || session.trim() === "" || !isCurrentTerm}
+        title={
+          !isCurrentTerm
+            ? "This term is read-only — it isn't the current term"
+            : draftCount === 0
+              ? "No saved drafts to submit"
+              : undefined
+        }
       >
         {isPending ? "Submitting…" : `Submit ${draftCount} draft${draftCount === 1 ? "" : "s"}`}
       </Button>

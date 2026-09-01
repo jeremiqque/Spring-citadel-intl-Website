@@ -32,6 +32,7 @@ import { getGradingConfig } from "@/lib/grading-settings";
 import { avatarUrl } from "@/lib/avatar";
 import { Avatar } from "@/components/ui/avatar";
 import { RemovePhotoButton } from "../../remove-photo-button";
+import { ChangeClassButton } from "../change-class-button";
 
 // A student accumulates a grade row per subject per term forever — the
 // history table used to load every one of them via a single unbounded
@@ -44,6 +45,14 @@ function statusBadgeVariant(status: string): "success" | "warning" | "outline" {
   if (status === "AT_RISK") return "warning";
   return "outline";
 }
+
+const CLASS_CHANGE_REASON_LABEL: Record<string, string> = {
+  PROMOTED: "Promoted",
+  REPEATED: "Repeated",
+  CORRECTED: "Corrected",
+  GRADUATED: "Graduated",
+  WITHDRAWN: "Withdrawn",
+};
 
 // Same green/amber/red/neutral read as GRADE_BAND_CLASS, but as separate
 // bg/text pairs rather than one combined string — the KPI tiles below need
@@ -76,6 +85,19 @@ export default async function StudentProfilePage({
   });
 
   if (!student) notFound();
+
+  const [allClasses, classChanges] = await Promise.all([
+    prisma.class.findMany({ orderBy: [{ level: "asc" }, { name: "asc" }], select: { id: true, name: true } }),
+    // Most-recent-first, capped rather than paginated — a student changes
+    // class a handful of times over their whole time at the school, not
+    // hundreds, so this doesn't need the grade-history table's pagination.
+    prisma.studentClassChange.findMany({
+      where: { studentId: id },
+      include: { fromClass: { select: { name: true } }, toClass: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    }),
+  ]);
 
   // "Current" is whatever the admin has the school's term/session set to
   // (Setting table) — not just "the most recent grade row" — so this stays
@@ -158,7 +180,7 @@ export default async function StudentProfilePage({
       <BackLink href="/portal/admin/students" label="Back to students" />
 
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 items-center gap-4">
           {/* Falls back to the two-letter initials this page already used
               when there is no photo, so an account without one looks exactly
               as it did before the feature existed. */}
@@ -175,7 +197,7 @@ export default async function StudentProfilePage({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Badge variant={statusBadgeVariant(student.status)}>{student.status.replace("_", " ")}</Badge>
           {/* Only rendered when there is actually a photo to remove — a
               permanently visible control for a thing that does not exist
@@ -183,6 +205,14 @@ export default async function StudentProfilePage({
           {student.user.avatarUpdatedAt && (
             <RemovePhotoButton userId={student.user.id} personName={student.user.name} />
           )}
+          <ChangeClassButton
+            studentId={student.id}
+            studentName={student.user.name}
+            currentClassId={student.classId}
+            currentClassName={student.class.name}
+            promotesToClassId={student.class.promotesToClassId}
+            classes={allClasses}
+          />
           <Button asChild variant="outline">
             <Link href={`/portal/admin/students/${student.id}/edit`}>Edit</Link>
           </Button>
@@ -258,7 +288,7 @@ export default async function StudentProfilePage({
 
       {termResult?.status === "PUBLISHED" && (
         <section className="rounded-lg border border-border bg-muted/20 p-5">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h2 className="text-sm font-medium text-foreground">
                 Published result — {termResult.term.replace("_", " ")}, {termResult.session}
@@ -327,6 +357,40 @@ export default async function StudentProfilePage({
           </>
         )}
       </section>
+
+      {classChanges.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium text-foreground">Class history</h2>
+          <div className="rounded-lg border border-border">
+            <Table caption={`Class change history for ${student.user.name}`}>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Session</TableHead>
+                  <TableHead>From</TableHead>
+                  <TableHead>To</TableHead>
+                  <TableHead>Reason</TableHead>
+                  <TableHead>Note</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {classChanges.map((c) => (
+                  <TableRow key={c.id}>
+                    <TableCell>{c.session}</TableCell>
+                    <TableCell>{c.fromClass.name}</TableCell>
+                    <TableCell>{c.toClass?.name ?? <span className="text-muted-foreground">Left the school</span>}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{CLASS_CHANGE_REASON_LABEL[c.reason]}</Badge>
+                    </TableCell>
+                    <TableCell className="max-w-xs whitespace-normal text-xs text-muted-foreground">
+                      {c.note ?? "—"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

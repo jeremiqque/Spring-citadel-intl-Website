@@ -69,6 +69,53 @@ export async function setFormTeacherAction(
 }
 
 
+export type SetPromotionPathResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Set (or clear) which class this class's students move into by default
+ * when the admin runs end-of-session promotion (see /portal/admin/promotions
+ * and lib/class-change.ts). Purely a default — the promotions screen lets
+ * the admin override it per student (repeat, graduate, withdraw, or a
+ * different class entirely), and Class.promotesToClassId is nullable
+ * (onDelete: SetNull) precisely because "terminal, no next class" (SS3) and
+ * "not configured yet" are both valid, ordinary states, not errors.
+ */
+export async function setClassPromotionPathAction(
+  classId: string,
+  promotesToClassId: string | null
+): Promise<SetPromotionPathResult> {
+  await requireAdmin();
+
+  const parsedClassId = idSchema.safeParse(classId);
+  if (!parsedClassId.success) {
+    return { ok: false, error: "Class not found." };
+  }
+
+  if (promotesToClassId !== null) {
+    const parsedTargetId = idSchema.safeParse(promotesToClassId);
+    if (!parsedTargetId.success) {
+      return { ok: false, error: "Target class not found." };
+    }
+    if (promotesToClassId === classId) {
+      return { ok: false, error: "A class can't promote into itself." };
+    }
+  }
+
+  try {
+    await prisma.class.update({
+      where: { id: classId },
+      data: { promotesToClassId },
+    });
+  } catch (err) {
+    console.error("setClassPromotionPathAction failed:", err);
+    return { ok: false, error: "Could not save. Please try again." };
+  }
+
+  revalidatePath("/portal/admin/classes");
+  revalidatePath("/portal/admin/promotions");
+  return { ok: true };
+}
+
 export type CreateClassResult = { ok: true; classId: string } | { ok: false; error: string };
 
 /**
@@ -148,21 +195,27 @@ export async function deleteClassAction(classId: string): Promise<DeleteClassRes
     return { ok: false, error: "Class not found." };
   }
 
-  const [students, grades, attendance, psychomotor, termResults] = await Promise.all([
+  const [students, grades, attendance, psychomotor, termResults, classChanges] = await Promise.all([
     prisma.student.count({ where: { classId } }),
     prisma.grade.count({ where: { classId } }),
     prisma.attendance.count({ where: { classId } }),
     prisma.psychomotorRating.count({ where: { classId } }),
     prisma.termResult.count({ where: { classId } }),
+    // A class can be referenced by a StudentClassChange as either the "from"
+    // or the "to" side (e.g. it's SS1 and a JSS3 cohort was promoted into
+    // it) — either one is history that a hard delete must not orphan.
+    prisma.studentClassChange.count({
+      where: { OR: [{ fromClassId: classId }, { toClassId: classId }] },
+    }),
   ]);
 
-  if (students + grades + attendance + psychomotor + termResults > 0) {
+  if (students + grades + attendance + psychomotor + termResults + classChanges > 0) {
     return {
       ok: false,
       error:
         students > 0
           ? `${cls.name} has ${students} student${students === 1 ? "" : "s"} enrolled and can't be deleted. Move or remove them first.`
-          : `${cls.name} has academic records on file (grades, attendance or ratings) and can't be deleted.`,
+          : `${cls.name} has academic records on file (grades, attendance, ratings or promotion history) and can't be deleted.`,
     };
   }
 

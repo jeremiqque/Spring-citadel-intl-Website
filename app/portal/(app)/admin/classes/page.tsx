@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ClassCoverage, type ClassAssignment } from "./class-coverage";
 import { FormTeacherPicker } from "./form-teacher-picker";
+import { PromotionPathPicker } from "./promotion-path-picker";
 import { ClassForm } from "./class-form";
 import { ClassDeleteButton } from "./class-delete-button";
 
@@ -195,6 +196,7 @@ export default async function AdminClassesPage() {
               <TableHead>Teachers</TableHead>
               <TableHead>Subjects covered</TableHead>
               <TableHead>Form teacher</TableHead>
+              <TableHead>Promotes to</TableHead>
               <TableHead>Grading</TableHead>
               <TableHead className="w-10" />
             </TableRow>
@@ -202,7 +204,7 @@ export default async function AdminClassesPage() {
           <TableBody>
             {classes.length === 0 && (
               <TableRow>
-                <TableCell colSpan={10} className="py-8 text-center text-muted-foreground">
+                <TableCell colSpan={11} className="py-8 text-center text-muted-foreground">
                   No classes yet. Add the first one to get started.
                 </TableCell>
               </TableRow>
@@ -218,7 +220,7 @@ export default async function AdminClassesPage() {
                   {showLevelHeader && (
                     <TableRow className="border-b-0 bg-muted/40 hover:bg-muted/40">
                       <TableCell
-                        colSpan={10}
+                        colSpan={11}
                         className="py-2 text-xs font-medium tracking-wide text-muted-foreground uppercase"
                       >
                         {LEVEL_LABEL[c.level] ?? c.level}
@@ -263,6 +265,13 @@ export default async function AdminClassesPage() {
                         classId={c.id}
                         formTeacherId={c.formTeacherId}
                         teachers={teacherOptions}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <PromotionPathPicker
+                        classId={c.id}
+                        promotesToClassId={c.promotesToClassId}
+                        classes={classes.filter((other) => other.id !== c.id).map((other) => ({ id: other.id, name: other.name }))}
                       />
                     </TableCell>
                     <TableCell>

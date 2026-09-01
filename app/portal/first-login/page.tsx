@@ -123,7 +123,7 @@ export default function FirstLoginPage() {
 
   return (
     <div
-      className="portal flex min-h-screen items-center justify-center bg-white px-8"
+      className="portal flex min-h-svh items-center justify-center bg-white px-5 py-10 sm:px-8"
       style={{ fontFamily: "var(--font-aeonik), ui-sans-serif, system-ui, sans-serif" }}
     >
       <div className="w-full max-w-[420px]">

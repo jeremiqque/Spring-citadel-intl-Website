@@ -103,7 +103,7 @@ export function DateOfBirthField({
   }
 
   return (
-    <div role="group" aria-labelledby={labelId} className="grid grid-cols-3 gap-2">
+    <div role="group" aria-labelledby={labelId} className="grid grid-cols-2 gap-2 lg:grid-cols-3">
       <Select value={day ? String(day) : undefined} onValueChange={(v) => commit(year, month, Number(v))}>
         <SelectTrigger aria-label="Day of birth" aria-invalid={invalid}>
           <SelectValue placeholder="Day" />

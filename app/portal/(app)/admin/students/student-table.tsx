@@ -72,7 +72,7 @@ export function StudentTable({ students }: { students: StudentRow[] }) {
   return (
     <div className="space-y-3">
       {selected.size > 0 && (
-        <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-4 py-2 text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-4 py-2 text-sm">
           <span className="font-medium text-foreground">
             {selected.size} student{selected.size === 1 ? "" : "s"} selected
           </span>

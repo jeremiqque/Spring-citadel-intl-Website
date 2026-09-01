@@ -8,6 +8,7 @@ import { notifyAdmins } from "@/lib/notify";
 import { gradeInputSchema } from "@/lib/validation/grade";
 import { idSchema, termSchema, sessionSchema } from "@/lib/validation/id";
 import { requireTeacher, requireAssignment, TeacherAuthError } from "@/lib/teacher";
+import { assertCurrentTerm } from "@/lib/academic-period";
 
 export type SaveGradeResult = { ok: true } | { ok: false; error: string };
 
@@ -84,6 +85,12 @@ export async function teacherSaveGradeAction(
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
+
+  // Check 2.5 — the term lock. Only the admin's current term is open for
+  // teacher entry; see lib/academic-period.ts's own comment for why admins
+  // are exempt from this and teachers are not.
+  const periodCheck = await assertCurrentTerm(parsedTerm.data, parsedSession.data);
+  if (!periodCheck.ok) return periodCheck;
 
   try {
     await requireAssignment(teacherId, classId, subjectId);
@@ -231,6 +238,9 @@ export async function teacherSubmitAllAction(
   ) {
     return { ok: false, error: "Invalid class, subject, term or session." };
   }
+
+  const periodCheck = await assertCurrentTerm(parsedTerm.data, parsedSession.data);
+  if (!periodCheck.ok) return periodCheck;
 
   try {
     await requireAssignment(teacherId, classId, subjectId);

@@ -6,6 +6,7 @@ import { upsertPsychomotorRating } from "@/lib/psychomotor";
 import { psychomotorInputSchema } from "@/lib/validation/psychomotor";
 import { idSchema, termSchema, sessionSchema } from "@/lib/validation/id";
 import { requireTeacher, requireFormTeacher, TeacherAuthError } from "@/lib/teacher";
+import { assertCurrentTerm } from "@/lib/academic-period";
 
 export type SavePsychomotorResult = { ok: true } | { ok: false; error: string };
 
@@ -52,6 +53,11 @@ export async function teacherSavePsychomotorAction(
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
+
+  // The term lock — see lib/academic-period.ts's own comment. Only the
+  // admin's current term is open for teacher entry.
+  const periodCheck = await assertCurrentTerm(parsedTerm.data, parsedSession.data);
+  if (!periodCheck.ok) return periodCheck;
 
   try {
     await requireFormTeacher(teacherId, classId);
@@ -141,6 +147,9 @@ export async function teacherSubmitAllPsychomotorAction(
   if (!parsedClassId.success || !parsedTerm.success || !parsedSession.success) {
     return { ok: false, error: "Invalid class, term or session." };
   }
+
+  const periodCheck = await assertCurrentTerm(parsedTerm.data, parsedSession.data);
+  if (!periodCheck.ok) return periodCheck;
 
   try {
     await requireFormTeacher(teacherId, classId);

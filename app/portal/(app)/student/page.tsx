@@ -138,7 +138,7 @@ export default async function StudentDashboardPage() {
 
       {termResult?.status === "PUBLISHED" && (
         <section className="rounded-lg border border-border bg-muted/20 p-5">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
             <h2 className="text-sm font-medium text-foreground">
               Official result — {currentTerm.replace("_", " ")}
             </h2>
@@ -179,7 +179,7 @@ export default async function StudentDashboardPage() {
           </div>
 
           {psychomotor && (
-            <div className="mt-4 grid gap-2 border-t border-border pt-4 sm:grid-cols-4">
+            <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border pt-4 sm:grid-cols-4">
               {(
                 [
                   ["Punctuality", psychomotor.punctuality],
@@ -249,7 +249,7 @@ export default async function StudentDashboardPage() {
       </section>
 
       <section>
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <h2 className="text-sm font-medium text-foreground">Subjects — {currentTerm.replace("_", " ")}</h2>
           <Link href="/portal/student/grades" className="text-xs text-brand hover:underline">
             Full grade history

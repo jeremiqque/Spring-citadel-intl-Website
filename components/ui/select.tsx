@@ -24,7 +24,7 @@ function SelectTrigger({
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       className={cn(
-        "flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs",
+        "flex h-11 w-full min-w-0 items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs sm:h-9 [&>span]:truncate",
         "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "data-[placeholder]:text-muted-foreground",
@@ -80,7 +80,7 @@ function SelectContent({
           // Never taller than the space left below the trigger, and at least
           // as wide as the trigger itself so options don't render narrower
           // than the field they belong to.
-          "max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)]",
+          "max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-1rem)]",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           position === "popper" && "translate-y-1",
           className
@@ -102,7 +102,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-pointer items-center rounded-sm py-1.5 pr-8 pl-2 text-sm select-none",
+        "relative flex w-full min-w-0 cursor-pointer items-center rounded-sm py-1.5 pr-8 pl-2 text-sm select-none [&>span]:truncate",
         // See the note in dropdown-menu.tsx: focus:bg-muted was a ~1.05:1
         // change and outline-none suppressed the global focus ring.
         "focus:bg-foreground/10 focus:text-foreground",

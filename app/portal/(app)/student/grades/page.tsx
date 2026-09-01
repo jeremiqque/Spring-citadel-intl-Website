@@ -74,7 +74,7 @@ export default async function StudentGradesPage({
           aria-current="page" is what actually conveys "this is the one
           you're on" to a screen reader, matching the sidebar nav's own
           aria-current usage. */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {(["TERM_1", "TERM_2", "TERM_3"] as const).map((t) => (
           <a
             key={t}

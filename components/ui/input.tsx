@@ -11,10 +11,10 @@ import { cn } from "@/lib/utils"
  */
 const inputSizes = {
   sm: "h-8 px-2.5 text-sm",
-  default: "h-9 px-3 text-sm",
+  default: "h-11 px-3 text-base sm:h-9 sm:text-sm",
   // The auth screens. One height for the whole flow, replacing 50px on
   // login and 57px on first-login.
-  auth: "h-[50px] rounded-none px-3.5 text-[length:var(--text-base)]",
+  auth: "h-[50px] rounded-none px-3 text-[length:var(--text-base)] sm:px-3.5",
 } as const
 
 function Input({

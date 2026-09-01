@@ -29,7 +29,7 @@ export function NotificationList({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
           {unreadCount > 0 ? `${unreadCount} unread` : "You're all caught up."}
         </p>
@@ -62,7 +62,7 @@ export function NotificationList({
               }
             >
               <div className="min-w-0">
-                <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <p className="flex min-w-0 items-start gap-2 text-sm font-medium break-words text-foreground">
                   {n.isUnread && (
                     <>
                       <span className="size-2 shrink-0 rounded-full bg-brand" aria-hidden />
@@ -84,7 +84,7 @@ export function NotificationList({
                       button below only rendering for unread items. */}
                   {n.isUnread && <span className="sr-only">(unread)</span>}
                 </p>
-                <p className="mt-0.5 text-sm text-muted-foreground">{n.body}</p>
+                <p className="mt-0.5 text-sm break-words text-muted-foreground">{n.body}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{n.createdAt}</p>
               </div>
               {n.isUnread && (

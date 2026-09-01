@@ -42,6 +42,7 @@ export function PsychomotorRow({
   classId,
   term,
   session,
+  isCurrentTerm,
   initial,
 }: {
   studentId: string;
@@ -50,6 +51,7 @@ export function PsychomotorRow({
   classId: string;
   term: TermValue;
   session: string;
+  isCurrentTerm: boolean;
   initial: (Record<Trait, number> & { remark: string | null; status: "DRAFT" | "SUBMITTED" }) | null;
 }) {
   const router = useRouter();
@@ -71,7 +73,7 @@ export function PsychomotorRow({
   const isSubmitted = initial?.status === "SUBMITTED";
   const isIncomplete = TRAITS.some(([key]) => values[key] === "");
   const noSession = session.trim() === "";
-  const locked = isSubmitted || noSession;
+  const locked = isSubmitted || noSession || !isCurrentTerm;
 
   const setTrait = (key: Trait, raw: string) => {
     setSaved(false);
@@ -161,7 +163,13 @@ export function PsychomotorRow({
             variant="outline"
             onClick={() => run(false)}
             disabled={isPending || locked || isIncomplete}
-            title={isIncomplete ? "Rate every trait first" : undefined}
+            title={
+              !isCurrentTerm && !isSubmitted
+                ? "This term is read-only — it isn't the current term"
+                : isIncomplete
+                  ? "Rate every trait first"
+                  : undefined
+            }
           >
             {isPending ? "Saving…" : saved ? "Saved" : "Save draft"}
           </Button>
@@ -169,7 +177,13 @@ export function PsychomotorRow({
             size="sm"
             onClick={() => setConfirmOpen(true)}
             disabled={isPending || locked || isIncomplete}
-            title={isIncomplete ? "Rate every trait first" : undefined}
+            title={
+              !isCurrentTerm && !isSubmitted
+                ? "This term is read-only — it isn't the current term"
+                : isIncomplete
+                  ? "Rate every trait first"
+                  : undefined
+            }
           >
             {isSubmitted ? "Submitted" : "Submit"}
           </Button>

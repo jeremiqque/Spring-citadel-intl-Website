@@ -83,7 +83,7 @@ export default async function StudentsPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-foreground">Students</h1>
         <Button asChild>
           <Link href="/portal/admin/students/new">Enroll student</Link>
@@ -154,8 +154,8 @@ export default async function StudentsPage({
             click neither submits the form nor navigates. If these buttons ever
             need real behaviour, they move into a "use client" component the
             way StudentRowActions did. */}
-        <div className="flex items-center gap-2.5">
-          <Button type="submit" size="field" className="rounded-xl px-10">
+        <div className="flex w-full flex-wrap items-center gap-2.5 sm:w-auto">
+          <Button type="submit" size="field" className="rounded-xl px-6 sm:px-10">
             Apply
           </Button>
           <span className="h-6 w-px shrink-0 bg-border" aria-hidden />

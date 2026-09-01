@@ -61,6 +61,67 @@ export async function checkCompileReadiness(
   return { ready: true, studentCount: students.length };
 }
 
+export type TermPublishSummary = {
+  totalClasses: number;
+  /** Class names with at least one non-PUBLISHED TermResult, or none
+   *  compiled at all yet, for this term/session — the classes a "Heads up"
+   *  banner would name when an admin is about to leave this term behind. */
+  pendingClassNames: string[];
+};
+
+/**
+ * A school-wide readiness summary for one term/session, used only for the
+ * "advance to the next term" warning on the Settings page (see
+ * settings-forms.tsx) — NOT a gate. checkCompileReadiness above answers "can
+ * THIS class be compiled" for the compile button on the results page; this
+ * answers "how many of ALL the gradeable classes have actually reached
+ * PUBLISHED" for one term, so an admin moving the school's current term
+ * forward can see what they're leaving unfinished without being blocked by
+ * it (see the decision behind assertCurrentTerm in lib/academic-period.ts —
+ * the admin's judgement call, not a hard rule enforced here).
+ *
+ * A class counts as "done" only if EVERY TermResult row it has for this
+ * term/session is PUBLISHED — a class with a lingering DRAFT or COMPILED
+ * result (partially reviewed, or compiled but not yet published) still
+ * shows up as pending, same as a class with no TermResult rows at all
+ * (never compiled).
+ */
+export async function getTermPublishSummary(
+  session: string,
+  term: TermValue
+): Promise<TermPublishSummary> {
+  const gradedClasses = await prisma.class.findMany({
+    where: { gradingEnabled: true },
+    select: { id: true, name: true },
+    orderBy: [{ level: "asc" }, { name: "asc" }],
+  });
+  if (gradedClasses.length === 0) {
+    return { totalClasses: 0, pendingClassNames: [] };
+  }
+
+  const results = await prisma.termResult.findMany({
+    where: { session, term, classId: { in: gradedClasses.map((c) => c.id) } },
+    select: { classId: true, status: true },
+  });
+
+  const statusesByClass = new Map<string, string[]>();
+  for (const r of results) {
+    const list = statusesByClass.get(r.classId) ?? [];
+    list.push(r.status);
+    statusesByClass.set(r.classId, list);
+  }
+
+  const pendingClassNames = gradedClasses
+    .filter((c) => {
+      const statuses = statusesByClass.get(c.id) ?? [];
+      const allPublished = statuses.length > 0 && statuses.every((s) => s === "PUBLISHED");
+      return !allPublished;
+    })
+    .map((c) => c.name);
+
+  return { totalClasses: gradedClasses.length, pendingClassNames };
+}
+
 export type CompileResult =
   | { ok: true; compiled: number }
   | { ok: false; error: string };

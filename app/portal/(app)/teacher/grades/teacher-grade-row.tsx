@@ -38,6 +38,7 @@ export function TeacherGradeRow({
   term,
   session,
   gradingConfig,
+  isCurrentTerm,
   initial,
 }: {
   studentId: string;
@@ -48,6 +49,10 @@ export function TeacherGradeRow({
   term: TermValue;
   session: string;
   gradingConfig: GradingConfig;
+  /** False when `term` isn't the admin's current term — see page.tsx's own
+   *  comment. The row still shows whatever was saved; it just can't be
+   *  changed, same as a submitted row. */
+  isCurrentTerm: boolean;
   initial: { assignment: number; midterm: number; exam: number; status: "DRAFT" | "SUBMITTED" } | null;
 }) {
   const router = useRouter();
@@ -73,7 +78,7 @@ export function TeacherGradeRow({
   // nothing queries. A disabled row is much better than a silently orphaned
   // result.
   const noSession = session.trim() === "";
-  const locked = isSubmitted || noSession;
+  const locked = isSubmitted || noSession || !isCurrentTerm;
 
   // `max` on a number input is advisory — it blocks the spinner but not
   // typing or pasting, so 999 in a 0-20 field would reach the action
@@ -178,7 +183,13 @@ export function TeacherGradeRow({
             variant="outline"
             onClick={() => run(false)}
             disabled={isPending || locked || isIncomplete}
-            title={isIncomplete ? "Enter all three scores first" : undefined}
+            title={
+              !isCurrentTerm && !isSubmitted
+                ? "This term is read-only — it isn't the current term"
+                : isIncomplete
+                  ? "Enter all three scores first"
+                  : undefined
+            }
           >
             {isPending ? "Saving…" : saved ? "Saved" : "Save draft"}
           </Button>
@@ -186,7 +197,13 @@ export function TeacherGradeRow({
             size="sm"
             onClick={() => setConfirmOpen(true)}
             disabled={isPending || locked || isIncomplete}
-            title={isIncomplete ? "Enter all three scores first" : undefined}
+            title={
+              !isCurrentTerm && !isSubmitted
+                ? "This term is read-only — it isn't the current term"
+                : isIncomplete
+                  ? "Enter all three scores first"
+                  : undefined
+            }
           >
             {isSubmitted ? "Submitted" : "Submit"}
           </Button>

@@ -84,7 +84,7 @@ export default async function TeachersPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-foreground">Teachers</h1>
         <Button asChild>
           <Link href="/portal/admin/teachers/new">Add teacher</Link>

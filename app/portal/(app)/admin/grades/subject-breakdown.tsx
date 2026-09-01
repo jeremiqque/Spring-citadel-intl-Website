@@ -109,7 +109,7 @@ export function SubjectBreakdown({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[60vh] overflow-y-auto rounded-md border border-border">
+        <div className="max-h-[45vh] overflow-y-auto rounded-md border border-border">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/40 text-left text-xs text-muted-foreground">

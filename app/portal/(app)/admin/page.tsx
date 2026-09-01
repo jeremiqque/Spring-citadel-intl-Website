@@ -204,7 +204,7 @@ export default async function AdminDashboardPage() {
             already exists at /portal/admin/students with real search/filter/
             pagination). "View all" goes there rather than duplicating it. */}
         <section className="rounded-lg border border-border bg-card p-6">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <HugeiconsIcon icon={HistoryIcon} size={22} className="text-foreground" />
               <h2 className="text-base font-medium text-foreground">Recent students</h2>
@@ -304,7 +304,7 @@ export default async function AdminDashboardPage() {
               events that populate the bell, surfaced here as a feed instead
               of a dropdown. */}
           <section className="rounded-lg border border-border bg-card p-6">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <HugeiconsIcon icon={HistoryIcon} size={22} className="text-foreground" />
                 <h2 className="text-base font-medium text-foreground">Live Activity Feed</h2>

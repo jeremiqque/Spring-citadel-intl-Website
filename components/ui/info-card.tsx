@@ -64,12 +64,12 @@ export function InfoRow({
   value: React.ReactNode
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-2.5 text-sm first:pt-3 last:pb-0">
-      <dt className="flex items-center gap-2 text-muted-foreground">
+    <div className="flex flex-col gap-0.5 py-2.5 text-sm first:pt-3 last:pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <dt className="flex shrink-0 items-center gap-2 text-muted-foreground">
         <HugeiconsIcon icon={icon} size={14} className="shrink-0 text-muted-foreground/70" />
         {label}
       </dt>
-      <dd className="text-right font-medium text-foreground">{value}</dd>
+      <dd className="min-w-0 font-medium break-words text-foreground sm:text-right">{value}</dd>
     </div>
   )
 }

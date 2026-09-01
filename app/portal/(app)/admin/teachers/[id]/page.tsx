@@ -180,7 +180,7 @@ export default async function TeacherProfilePage({
       <BackLink href="/portal/admin/teachers" label="Back to teachers" />
 
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 items-center gap-4">
           <Avatar
             src={avatarUrl(teacher.user.id, teacher.user.avatarUpdatedAt)}
             name={teacher.user.name}

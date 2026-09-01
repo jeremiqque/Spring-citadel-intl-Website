@@ -1,10 +1,11 @@
 import { firstParam } from "@/lib/search-params";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { UserGroupIcon, Alert02Icon } from "@hugeicons/core-free-icons";
+import { UserGroupIcon, Alert02Icon, SquareLock01Icon } from "@hugeicons/core-free-icons";
 
 import { prisma } from "@/lib/prisma";
 import { requireTeacher, formTeacherClass } from "@/lib/teacher";
 import { parseTerm } from "@/lib/validation/id";
+import { TERM_LABEL } from "@/lib/academic-period";
 import { PageHeader } from "@/components/ui/page-header";
 import { Surface, SurfaceHeader, EmptyState } from "@/components/ui/surface";
 import { Segmented } from "@/components/ui/segmented";
@@ -71,6 +72,10 @@ export default async function TeacherPsychomotorPage({
   const activeTerm: TermValue = term ?? parseTerm(termSetting?.value) ?? "TERM_1";
   const termLabel = activeTerm.replace("_", " ");
 
+  // Same term lock as teacher/grades/page.tsx — see its comment.
+  const currentTermValue = parseTerm(termSetting?.value);
+  const isCurrentTerm = currentSession !== "" && currentTermValue !== null && activeTerm === currentTermValue;
+
   const students = await prisma.student.findMany({
     where: { classId: formClass.id, status: { in: ["ACTIVE", "AT_RISK"] } },
     include: { user: { select: { name: true } } },
@@ -129,8 +134,23 @@ export default async function TeacherPsychomotorPage({
             </div>
           </div>
         </Surface>
-      ) : (
-        students.length > 0 && (
+      ) : !isCurrentTerm ? (
+        <Surface role="status" padding="sm" className="border-border bg-muted/30 shadow-none">
+          <div className="flex gap-3">
+            <HugeiconsIcon icon={SquareLock01Icon} size={18} className="mt-0.5 shrink-0 text-muted-foreground" aria-hidden />
+            <div className="text-sm">
+              <p className="font-medium text-foreground">{TERM_LABEL[activeTerm]} is read-only.</p>
+              <p className="mt-1 leading-body text-muted-foreground">
+                {currentTermValue ? `${TERM_LABEL[currentTermValue]} is the current term open for entry. ` : ""}
+                Ask an administrator to reopen {TERM_LABEL[activeTerm]} if you need to change something here.
+              </p>
+            </div>
+          </div>
+        </Surface>
+      ) : null}
+
+      {currentSession !== "" &&
+        (students.length > 0 && (
           <Surface padding="none" className="overflow-hidden">
             <div className="px-5 pt-4">
               <ProgressMeter
@@ -167,6 +187,7 @@ export default async function TeacherPsychomotorPage({
                 session={currentSession}
                 draftCount={draftCount}
                 className={formClass.name}
+                isCurrentTerm={isCurrentTerm}
               />
             ) : undefined
           }
@@ -211,6 +232,7 @@ export default async function TeacherPsychomotorPage({
                     classId={formClass.id}
                     term={activeTerm}
                     session={currentSession}
+                    isCurrentTerm={isCurrentTerm}
                     initial={
                       existing
                         ? {

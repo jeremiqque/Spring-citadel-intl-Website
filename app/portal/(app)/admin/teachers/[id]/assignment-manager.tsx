@@ -96,7 +96,7 @@ export function AssignmentManager({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-3">
-        <div className="w-48">
+        <div className="w-full sm:w-48">
           <Select
             value={classId}
             onValueChange={(v) => {
@@ -116,7 +116,7 @@ export function AssignmentManager({
             </SelectContent>
           </Select>
         </div>
-        <div className="w-48">
+        <div className="w-full sm:w-48">
           <Select value={subjectId} onValueChange={setSubjectId}>
             <SelectTrigger>
               <SelectValue placeholder="Subject" />

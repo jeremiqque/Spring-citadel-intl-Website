@@ -119,13 +119,13 @@ export default async function TeacherAttendancePage({
 
       <Surface padding="sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <Button asChild variant="outline" size="sm">
               <a href={`?date=${shiftIsoDate(date, -1)}`} aria-label="Previous day">
                 <HugeiconsIcon icon={ArrowLeft01Icon} size={14} />
               </a>
             </Button>
-            <form className="flex items-center gap-2">
+            <form className="flex min-w-0 flex-wrap items-center gap-2">
               <Input
                 type="date"
                 name="date"
@@ -168,7 +168,7 @@ export default async function TeacherAttendancePage({
         </Surface>
       ) : (
         students.length > 0 && (
-          <StatGroup>
+          <StatGroup className="sm:grid-cols-3 lg:grid-cols-5">
             <Stat label="Present" value={presentCount} tone="success" />
             <Stat label="Absent" value={absentCount} tone="danger" />
             <Stat label="Late" value={lateCount} tone="warning" />

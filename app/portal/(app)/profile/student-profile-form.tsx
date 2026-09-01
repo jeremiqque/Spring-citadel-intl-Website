@@ -58,7 +58,7 @@ export function StudentProfileForm({ initialContactPhone }: { initialContactPhon
         error={error}
         className="sm:max-w-sm"
       />
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" loading={isPending} disabled={!dirty}>
           Save
         </Button>

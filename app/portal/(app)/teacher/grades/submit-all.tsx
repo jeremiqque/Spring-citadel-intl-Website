@@ -31,6 +31,7 @@ export function SubmitAllDrafts({
   draftCount,
   className,
   subjectName,
+  isCurrentTerm,
 }: {
   classId: string;
   subjectId: string;
@@ -39,6 +40,7 @@ export function SubmitAllDrafts({
   draftCount: number;
   className: string;
   subjectName: string;
+  isCurrentTerm: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -79,8 +81,14 @@ export function SubmitAllDrafts({
       <Button
         size="field"
         onClick={() => setOpen(true)}
-        disabled={isPending || draftCount === 0 || session.trim() === ""}
-        title={draftCount === 0 ? "No saved drafts to submit" : undefined}
+        disabled={isPending || draftCount === 0 || session.trim() === "" || !isCurrentTerm}
+        title={
+          !isCurrentTerm
+            ? "This term is read-only — it isn't the current term"
+            : draftCount === 0
+              ? "No saved drafts to submit"
+              : undefined
+        }
       >
         {isPending ? "Submitting…" : `Submit ${draftCount} draft${draftCount === 1 ? "" : "s"}`}
       </Button>

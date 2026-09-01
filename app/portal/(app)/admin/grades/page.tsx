@@ -149,7 +149,7 @@ export default async function AdminGradesPage({
       {/* No tabs, per the PRD — one filterable table, GET form so every
           combination is a shareable URL. */}
       <form className="flex flex-wrap items-end gap-3">
-        <div>
+        <div className="min-w-0 flex-1 basis-[9rem] sm:max-w-[14rem]">
           <label className="text-xs text-muted-foreground" htmlFor="class">
             Class
           </label>
@@ -160,7 +160,7 @@ export default async function AdminGradesPage({
             options={gradedClasses.map((c) => ({ value: c.id, label: c.name }))}
           />
         </div>
-        <div>
+        <div className="min-w-0 flex-1 basis-[9rem] sm:max-w-[14rem]">
           <label className="text-xs text-muted-foreground" htmlFor="subject">
             Subject
           </label>
@@ -174,7 +174,7 @@ export default async function AdminGradesPage({
             ]}
           />
         </div>
-        <div>
+        <div className="min-w-0 flex-1 basis-[9rem] sm:max-w-[14rem]">
           <label className="text-xs text-muted-foreground" htmlFor="term">
             Term
           </label>
@@ -189,7 +189,7 @@ export default async function AdminGradesPage({
             ]}
           />
         </div>
-        <div>
+        <div className="min-w-0 flex-1 basis-[9rem] sm:max-w-[14rem]">
           <label className="text-xs text-muted-foreground" htmlFor="status">
             Status
           </label>

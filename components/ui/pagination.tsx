@@ -42,7 +42,7 @@ export function Pagination({
   const onLastPage = page >= totalPages;
 
   return (
-    <div className="flex items-center justify-between text-sm text-muted-foreground">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 text-sm text-muted-foreground">
       <span>
         Page {page} of {totalPages}
         {itemLabel !== undefined && totalItems !== undefined && (
@@ -56,11 +56,11 @@ export function Pagination({
 
       <div className="flex gap-2">
         {onFirstPage ? (
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" className="h-10 sm:h-7" disabled>
             Previous
           </Button>
         ) : (
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline" size="sm" className="h-10 sm:h-7">
             <Link href={hrefForPage(page - 1)} rel="prev">
               Previous
             </Link>
@@ -68,11 +68,11 @@ export function Pagination({
         )}
 
         {onLastPage ? (
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" className="h-10 sm:h-7" disabled>
             Next
           </Button>
         ) : (
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline" size="sm" className="h-10 sm:h-7">
             <Link href={hrefForPage(page + 1)} rel="next">
               Next
             </Link>

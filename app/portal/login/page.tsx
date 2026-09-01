@@ -69,8 +69,8 @@ export default function LoginPage() {
     // .portal activates the scoped shadcn tokens Button/Input/Label rely on
     // (see the .portal block in app/globals.css) — this page renders outside
     // app/portal/(app)/layout.tsx, so it applies the class directly.
-    <div className="portal flex min-h-screen items-center justify-center bg-[#e9ebf0] p-4 sm:p-8">
-      <div className="grid w-full max-w-[1280px] overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(13,18,32,.04),0_24px_60px_-20px_rgba(13,18,32,.18)] lg:min-h-[760px] lg:grid-cols-2">
+    <div className="portal flex min-h-svh items-center justify-center bg-[#e9ebf0] p-3 sm:p-8">
+      <div className="grid w-full max-w-[1280px] overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(13,18,32,.04),0_24px_60px_-20px_rgba(13,18,32,.18)] lg:min-h-[min(760px,calc(100svh-4rem))] lg:grid-cols-2">
         {/* ─────────────── Form ─────────────── */}
         <section
           // Below lg there is no illustration panel, so the form is the whole
@@ -78,7 +78,7 @@ export default function LoginPage() {
           // than hugging a left edge that no longer has anything beside it.
           // Labels and fields stay left-aligned at every width — centred form
           // labels are hard to scan and make error messages jump around.
-          className="flex flex-col items-center px-7 py-10 text-center sm:px-16 sm:py-14 lg:items-stretch lg:text-left"
+          className="flex flex-col items-center px-5 py-8 text-center sm:px-16 sm:py-14 lg:items-stretch lg:text-left"
           // .portal's base rule sets font-sans to Inter (for grade-table
           // numerals elsewhere in the portal), but the login screen is a brand
           // surface and stays on Aeonik like the marketing site. Inline style
@@ -101,7 +101,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mx-auto my-10 w-full max-w-[400px] lg:my-12">
-            <h1 className="text-[34px] font-semibold leading-[1.15] tracking-[-0.025em] text-foreground">
+            <h1 className="text-[28px] font-semibold leading-[1.15] tracking-[-0.025em] text-foreground sm:text-[34px]">
               Welcome back
             </h1>
             <p className="mt-2.5 mb-8 text-[15px] text-muted-foreground">Sign in to the school portal.</p>

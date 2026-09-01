@@ -153,13 +153,13 @@ export default async function AdminAttendancePage({
             </Button>
           </form>
 
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <Button asChild variant="outline" size="sm">
               <a href={hrefFor(activeClassId, shiftIsoDate(date, -1))} aria-label="Previous day">
                 <HugeiconsIcon icon={ArrowLeft01Icon} size={14} />
               </a>
             </Button>
-            <form className="flex items-center gap-2">
+            <form className="flex min-w-0 flex-wrap items-center gap-2">
               <input type="hidden" name="class" value={activeClassId} />
               <Input
                 type="date"

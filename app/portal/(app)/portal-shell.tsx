@@ -24,6 +24,7 @@ import {
   ShieldUserIcon,
   Award01Icon,
   CalendarCheck01Icon,
+  GraduationCapIcon,
 } from "@hugeicons/core-free-icons";
 import {
   DropdownMenu,
@@ -92,6 +93,7 @@ const NAV: Record<Role, NavSection[]> = {
         { label: "Results", href: "/portal/admin/results", icon: Award01Icon },
         { label: "Attendance", href: "/portal/admin/attendance", icon: CalendarCheck01Icon },
         { label: "Classes", href: "/portal/admin/classes", icon: Book01Icon },
+        { label: "Promotions", href: "/portal/admin/promotions", icon: GraduationCapIcon },
         { label: "Subjects", href: "/portal/admin/subjects", icon: PencilEdit01Icon },
       ],
     },
@@ -265,7 +267,7 @@ export function PortalShell({
     // scoped shadcn tokens from step 13 for the whole app (login/first-login
     // apply their own .portal directly, since they render before this shell
     // exists in the tree).
-    <div className="portal flex min-h-screen">
+    <div className="portal flex min-h-svh">
       {/* Skip link — first thing in the tab order, so a keyboard user can
           jump past the nav instead of traversing it on every page load. */}
       <a

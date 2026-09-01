@@ -119,6 +119,26 @@ enum NotificationType {
   // GRADES_SUBMITTED with a single "your result is ready" once everything
   // feeding it has been compiled and an admin has published it.
   RESULT_PUBLISHED
+
+  // Raised whenever a student's class changes for any reason — a bulk
+  // end-of-session promotion, an individual correction, or a repeat. One
+  // event covers all of StudentClassChange's reasons; the notification body
+  // is written per-reason at the call site (see changeStudentClass in
+  // lib/class-change.ts), same as how GRADES_SUBMITTED covers both the
+  // single-row and bulk teacher actions.
+  STUDENT_CLASS_CHANGED
+}
+
+// A student's class ever changing after enrolment (promoted, held back,
+// corrected, or leaving the school) for a reason worth recording — see
+// StudentClassChange's own comment for why this exists as its own table
+// rather than just overwriting Student.classId silently.
+enum ClassChangeReason {
+  PROMOTED // the ordinary end-of-session move to the next class
+  REPEATED // stayed in the same class for another session
+  CORRECTED // an out-of-cycle fix — the student was in the wrong class
+  GRADUATED // left the school having completed SS3 (or another terminal class)
+  WITHDRAWN // left the school for any other reason
 }
 
 // ─── Identity ───────────────────────────────────────────────────────────────
@@ -210,6 +230,21 @@ model Class {
   formTeacherId String?  @unique
   formTeacher   Teacher? @relation("ClassFormTeacher", fields: [formTeacherId], references: [id], onDelete: SetNull)
 
+  // Where this class's students go at the end of a session — set once per
+  // class (the Classes admin screen) and used as the default every student
+  // in it starts with on the bulk Promotions screen; always overridable
+  // per student there, so a repeat doesn't need a separate flow. Null means
+  // this class is terminal (SS3, typically): promoting out of it is a
+  // graduation, not a move to another row. Not @unique — more than one
+  // class can promote into the same next class, e.g. two JSS 1 arms both
+  // feeding a single JSS 2. onDelete: SetNull, not Restrict, because this
+  // is only a forward-looking plan, not a historical record — deleting the
+  // target class just means the plan needs resetting, unlike
+  // StudentClassChange below, which records what actually happened.
+  promotesToClassId String?
+  promotesTo        Class?  @relation("ClassPromotionPath", fields: [promotesToClassId], references: [id], onDelete: SetNull)
+  promotedFrom      Class[] @relation("ClassPromotionPath")
+
   createdAt DateTime @default(now())
 
   students    Student[]
@@ -218,8 +253,56 @@ model Class {
   psychomotorRatings PsychomotorRating[]
   termResults TermResult[]
   attendances Attendance[]
+  classChangesFrom StudentClassChange[] @relation("ClassChangeFrom")
+  classChangesTo   StudentClassChange[] @relation("ClassChangeTo")
 
   @@index([level])
+}
+
+// One row per class change a student ever goes through after enrolment —
+// the audit trail Student.classId alone can't provide, since overwriting it
+// in place leaves no record of what it used to be, who changed it, or why.
+// That matters here specifically because a class change is not a small
+// edit: it can move a student out of view of a teacher who used to see
+// them, and a parent asking "why is my child repeating JSS 2" deserves a
+// real answer, not a guess. See changeStudentClass in lib/class-change.ts,
+// the one function that ever writes a row here — used directly for a
+// single correction (student profile) and in a loop for a bulk end-of-
+// session promotion (the Promotions screen), the same
+// one-primitive-two-callers shape lib/grades.ts's upsertGrade already
+// established for teacher vs admin grade entry.
+model StudentClassChange {
+  id String @id @default(uuid())
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+
+  // Required: every change has a real "from", since a student always has a
+  // class before this fires (there's no change on initial enrolment).
+  fromClassId String
+  fromClass   Class  @relation("ClassChangeFrom", fields: [fromClassId], references: [id], onDelete: Restrict)
+
+  // Nullable: GRADUATED and WITHDRAWN mean the student left the school
+  // entirely, not that they moved to another row.
+  toClassId String?
+  toClass   Class?  @relation("ClassChangeTo", fields: [toClassId], references: [id], onDelete: Restrict)
+
+  // The session this change was made in — same string Setting.currentSession
+  // held at the time, so a class's history reads "promoted out of JSS 2 at
+  // the end of 2026/2027" rather than just a bare timestamp.
+  session String
+  reason  ClassChangeReason
+  note    String?
+
+  // Bare string, not a relation — same soft-reference pattern TermResult's
+  // compiledById already uses for "which admin did this," so an admin
+  // account can be removed later without a hard FK forcing a decision about
+  // history that has nothing to do with account lifecycle.
+  changedById String?
+
+  createdAt DateTime @default(now())
+
+  @@index([studentId, createdAt])
 }
 
 model Subject {
@@ -336,6 +419,7 @@ model Student {
   psychomotorRatings PsychomotorRating[]
   termResults TermResult[]
   attendances Attendance[]
+  classChanges StudentClassChange[]
 
   // [classId] alone was a strict leftmost prefix of [classId, status] and
   // bought nothing.
